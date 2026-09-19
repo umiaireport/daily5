@@ -13,9 +13,20 @@ Daily5 is a five-round market-reading game: Nansen-backed evidence becomes the c
 - **Account:** create an account in the login screen, or use the seeded demo login `demo` / `demo`. Passwords are scrypt-hashed in SQLite and the browser receives only an httpOnly session cookie. Completed official results remain visible after a day rolls over.
 - **Records:** the current day’s official board, frozen historical day boards, and an all-time top-100 official leaderboard are server-owned. Practice is excluded.
 
+## Dependencies
+
+The complete installation uses:
+
+- Node.js 24.x and npm
+- PostgreSQL 15 or newer for durable users, attempts, and leaderboards
+- A Nansen API account and server-side API key for provider-backed live data
+- Git and a modern browser
+
+The current local fallback opens SQLite through Node 24’s built-in `node:sqlite`, so synthetic tests can run without a database server. That fallback is intentionally not durable and must not be described as a production account database. A complete multi-user installation must provide the PostgreSQL service and connect the application’s database adapter to its `DATABASE_URL`.
+
 ## Run locally
 
-Node 24 is required because the server uses the built-in `node:sqlite` module.
+Node 24 is required because the local fallback uses the built-in `node:sqlite` module. Install and start PostgreSQL before configuring the durable installation. The copy-paste setup brief for an installation agent is in [`docs/ai-install-prompt.md`](docs/ai-install-prompt.md).
 
 ```text
 npm ci
@@ -27,9 +38,11 @@ npm run build
 
 `npm ci` installs the pinned runtime and build dependencies from `package-lock.json`: Fastify, cookie/rate-limit/static plugins, React, Vite, Zod, TypeScript, `tsx`, Prettier, and Playwright. No global package installation is required.
 
+For the durable configuration, set `DATABASE_URL` to the PostgreSQL connection string supplied by the local PostgreSQL server or managed PostgreSQL provider. Do not put that connection string, the Nansen key, or any other secret in GitHub. The checked-in `.env.example` is a safe template; the local `.env` file is ignored by Git.
+
 Open `http://127.0.0.1:8311` and log in with `demo` / `demo`.
 
-The app is safe to run without a provider key: local synthetic mode is explicit and labelled as synthetic. To load provider-backed historical assets, configure `DATA_MODE=live`, `NANSEN_API` (the legacy `NANSEN_API2` and `NANSEN_API_KEY` aliases remain supported), and run the one-time collection flow:
+The app is safe to run without a provider key: local synthetic mode is explicit and labelled as synthetic. Live mode requires a Nansen API account with available credits. To load provider-backed historical assets, configure `DATA_MODE=live`, `NANSEN_API` (the legacy `NANSEN_API2` and `NANSEN_API_KEY` aliases remain supported), and run the one-time collection flow:
 
 ```text
 DATA_MODE=live DAILY_FIVE_DOWNLOAD=true npm run download:daily-five

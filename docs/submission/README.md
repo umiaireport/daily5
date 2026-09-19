@@ -27,11 +27,13 @@ Use the local rules cache at [`../buildathon-rules.md`](../buildathon-rules.md),
 
 - Node.js `24.x` (`package.json` requires `>=24.0.0 <25`)
 - npm bundled with Node
+- PostgreSQL `15+` for the durable user, attempt, and leaderboard database
+- A Nansen API account and server-side API key for live provider data
 - Git for cloning/pushing
 - A modern browser
 - Playwright only for automated browser tests or recording assistance
 
-Node 24 is required because the server uses built-in `node:sqlite`. No global Fastify, Vite, TypeScript, or database installation is required.
+Node 24 is required because the local fallback uses built-in `node:sqlite`. PostgreSQL is still required for a complete multi-user installation; SQLite is only a local/test fallback until the durable database adapter is connected. No global Fastify, Vite, TypeScript, or JavaScript package installation is required.
 
 ### Clean setup
 
@@ -40,6 +42,8 @@ git clone https://github.com/umiaireport/daily5.git
 cd daily5
 npm ci
 cp .env.example .env
+# Fill DATABASE_URL with the PostgreSQL connection string.
+# Fill NANSEN_API only when live provider data is required.
 npm run typecheck
 npm run build
 npm run dev
@@ -55,6 +59,8 @@ password: demo
 ```
 
 The login screen also supports account creation. New users need a 3–40 character username and an 8–80 character password. The display name is used on the board.
+
+The local `.env` file is deliberately ignored and must never be committed. At minimum, the complete installation needs a running PostgreSQL server and a `DATABASE_URL`; live mode additionally needs `NANSEN_API`. Keep synthetic mode enabled while testing the installation if a funded Nansen key is not available.
 
 Before each public push:
 
@@ -84,7 +90,7 @@ GET  /api/auth/me
 POST /api/auth/logout
 ```
 
-Local defaults to `./data/daily5.sqlite`. The free Vercel test uses `/tmp/daily5.sqlite`: it is writable but ephemeral, so a function restart can reset accounts and scores. That is suitable for a demo, not durable production. A real multi-user launch needs a persistent managed database for users, attempts, and leaderboards.
+The local fallback defaults to `./data/daily5.sqlite`. The free Vercel test uses `/tmp/daily5.sqlite`: it is writable but ephemeral, so a function restart can reset accounts and scores. That is suitable for a demo, not durable production. A real multi-user launch needs the PostgreSQL service and a database adapter connected through `DATABASE_URL` for users, attempts, and leaderboards.
 
 ## 4. Nansen data modes
 
