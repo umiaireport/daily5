@@ -2,13 +2,16 @@
 
 ## Purpose and sections
 
-`server/app.ts` builds the API, initializes the daily tables, applies security headers, owns the cookie session boundary and error mapping, registers game and daily entry/result routes, reports health/admin status, and optionally serves the production bundle.
+`server/app.ts` builds the API, initializes the daily and account tables, applies security headers, owns the revocable auth-cookie boundary and error mapping, registers game and Daily Five routes, reports health/admin status, and optionally serves the production bundle.
 
 ## Functions
 
-- `buildApp` — `server/app.ts:40`: creates/configures Fastify, optionally collects a live scenario, passes its board factory to Hunt v2, initializes a pinned daily challenge, and registers all hooks/routes.
-- `sessionId` — `server/app.ts:151`: resolves and validates the `whale_session` cookie.
-- `dailySummary` — `server/app.ts:260`: returns public daily evidence and lifecycle fields without settlement outcomes.
-- `ensureDailyChallenge` — `server/app.ts:284`: publishes or resumes the immutable UTC-day challenge.
+- `buildApp` — `server/app.ts:342`: creates/configures Fastify, initializes the database and demo user, optionally collects provider data, and registers all hooks/routes.
+- `authenticatedAuthUser` — `server/app.ts:528`: resolves the signed-in user from the revocable `daily5_user` cookie.
+- `POST /api/auth/login` — `server/app.ts:548`: verifies credentials and issues an httpOnly session cookie.
+- `POST /api/auth/register` — `server/app.ts:555`: creates an account and signs it in.
+- `GET /api/auth/me` — `server/app.ts:569`: returns the safe current-user record.
+- `POST /api/auth/logout` — `server/app.ts:573`: revokes the server session and clears the cookie.
+- `sessionId` — `server/app.ts:576`: resolves and validates the legacy `whale_session` cookie for Whale Arena routes.
 
 See [`docs/wiki/app.md`](../docs/wiki/app.md) and [`docs/api-map.md`](../docs/api-map.md).

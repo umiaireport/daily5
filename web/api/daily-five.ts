@@ -107,7 +107,15 @@ async function readJson(response: Response): Promise<unknown> {
   try {
     return JSON.parse(text) as unknown;
   } catch {
-    return { message: text };
+    const contentType = response.headers.get('content-type') ?? '';
+    return {
+      message:
+        /the page|<html|vercel/i.test(text) || response.status === 401
+          ? 'The deployment returned a web page instead of the Daily5 API. Check the deployment URL and access settings, then reload.'
+          : contentType.toLowerCase().includes('json')
+            ? 'The Daily5 server returned invalid data. Please reload.'
+            : 'The Daily5 server returned an unexpected response. Please reload.',
+    };
   }
 }
 

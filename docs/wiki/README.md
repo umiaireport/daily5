@@ -24,6 +24,8 @@ Each page documents one source or script module. Paths and function line numbers
 - [`daily-game.md`](daily-game.md) — daily challenge publication, entry, result, and settlement rules.
 - [`scoring.md`](scoring.md) — weights and cost-adjusted scoring.
 - [`store.md`](store.md) — SQLite opening and transactions.
+- [`auth-database.md`](auth-database.md) — account and session tables.
+- [`auth-users.md`](auth-users.md) — registration, password hashing, login, and logout.
 - [`daily-database.md`](daily-database.md) — daily challenge tables and worker leases.
 - [`daily-five-database.md`](daily-five-database.md) — Daily Five attempt tables and reset helper.
 - [`hunt-engine.md`](hunt-engine.md) — Whale Hunt lifecycle, role views, rules, and reconstruction.
@@ -48,7 +50,7 @@ Each page documents one source or script module. Paths and function line numbers
 - [`../web/hunt/HuntScreen.README.md`](../web/hunt/HuntScreen.README.md) — Hunt turn handoffs and role controls.
 - [`../web/hunt.css.README.md`](../web/hunt.css.README.md) — Hunt phase, budget, and responsive styles.
 - [`hunt-api.md`](hunt-api.md) — Whale Hunt browser transport and structured errors.
-- [`api-client.md`](api-client.md) — browser API helper.
+- [`api-client.md`](api-client.md) — browser API helper and non-JSON deployment errors.
 - [`arena-ui.md`](arena-ui.md) — clue and allocation controls.
 - [`modal-ui.md`](modal-ui.md) — native dialog wrapper.
 - [`results-ui.md`](results-ui.md) — reveal and scorecard actions.

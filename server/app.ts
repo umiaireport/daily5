@@ -1,4 +1,4 @@
-import Fastify, { type FastifyRequest } from 'fastify';
+import Fastify, { type FastifyReply, type FastifyRequest } from 'fastify';
 import cookie from '@fastify/cookie';
 import rateLimit from '@fastify/rate-limit';
 import staticFiles from '@fastify/static';
@@ -6,6 +6,17 @@ import { existsSync } from 'node:fs';
 import { resolve } from 'node:path';
 import { z } from 'zod';
 import { openDatabase } from './db/store.js';
+import {
+  AuthConflictError,
+  AuthValidationError,
+  authenticateUser,
+  createAuthSession,
+  deleteAuthSession,
+  ensureDemoUser,
+  userByAuthSession,
+  userById,
+  registerUser,
+} from './auth/users.js';
 import {
   DailyFiveEngine,
   DailyFiveError,
@@ -334,6 +345,7 @@ export async function buildApp(options: AppOptions = {}) {
   const db = openDatabase(
     options.databasePath ?? process.env.DATABASE_PATH ?? './data/whale-arena.sqlite',
   );
+  ensureDemoUser(db);
   const requestedMode =
     options.dataMode ?? (process.env.DATA_MODE === 'live' ? 'live' : 'synthetic');
   const dailyFiveDayIdPrefix = requestedMode === 'live' ? 'daily-v3-provider-' : undefined;
@@ -506,29 +518,60 @@ export async function buildApp(options: AppOptions = {}) {
   const authSchema = z
     .object({ username: z.string().min(1).max(40), password: z.string().max(80) })
     .strict();
-  function authenticatedUser(request: FastifyRequest): string {
-    if (request.cookies[AUTH_COOKIE] !== 'demo')
-      throw new DailyFiveError('FORBIDDEN', 'Log in to continue.', 401);
-    return 'demo';
+  const registerSchema = z
+    .object({
+      username: z.string().min(1).max(40),
+      password: z.string().min(1).max(80),
+      displayName: z.string().max(60).optional(),
+    })
+    .strict();
+  function authenticatedAuthUser(request: FastifyRequest) {
+    const user = userByAuthSession(db, request.cookies[AUTH_COOKIE]);
+    if (!user) throw new DailyFiveError('FORBIDDEN', 'Log in to continue.', 401);
+    return user;
   }
-  app.post('/api/auth/login', async (request, reply) => {
-    const { username, password } = authSchema.parse(request.body ?? {});
-    if (username !== 'demo' || password !== 'demo')
-      return reply.code(401).send({ message: 'Use the demo account demo / demo.' });
-    reply.setCookie(AUTH_COOKIE, 'demo', {
+  function authenticatedUser(request: FastifyRequest): string {
+    return authenticatedAuthUser(request).id;
+  }
+  function dailyFivePlayer(request: FastifyRequest): string | undefined {
+    return userByAuthSession(db, request.cookies[AUTH_COOKIE])?.id ?? request.cookies[COOKIE];
+  }
+  function setAuthCookie(reply: { setCookie: FastifyReply['setCookie'] }, userId: string): void {
+    reply.setCookie(AUTH_COOKIE, createAuthSession(db, userId), {
       httpOnly: true,
       sameSite: 'lax',
       secure: production,
       path: '/',
       maxAge: 60 * 60 * 24 * 30,
     });
-    return { username: 'demo', displayName: 'demo' };
+  }
+  app.post('/api/auth/login', async (request, reply) => {
+    const { username, password } = authSchema.parse(request.body ?? {});
+    const user = authenticateUser(db, username, password);
+    if (!user) return reply.code(401).send({ message: 'Invalid username or password.' });
+    setAuthCookie(reply, user.id);
+    return { username: user.username, displayName: user.displayName };
+  });
+  app.post('/api/auth/register', async (request, reply) => {
+    const { username, password, displayName } = registerSchema.parse(request.body ?? {});
+    try {
+      const user = registerUser(db, username, password, displayName);
+      setAuthCookie(reply, user.id);
+      return reply.code(201).send({ username: user.username, displayName: user.displayName });
+    } catch (error) {
+      if (error instanceof AuthConflictError)
+        return reply.code(409).send({ message: error.message });
+      if (error instanceof AuthValidationError)
+        return reply.code(400).send({ message: error.message });
+      throw error;
+    }
   });
   app.get('/api/auth/me', async (request) => {
-    authenticatedUser(request);
-    return { username: 'demo', displayName: 'demo' };
+    const user = authenticatedAuthUser(request);
+    return { username: user.username, displayName: user.displayName };
   });
-  app.post('/api/auth/logout', async (_request, reply) => {
+  app.post('/api/auth/logout', async (request, reply) => {
+    deleteAuthSession(db, request.cookies[AUTH_COOKIE]);
     reply.clearCookie(AUTH_COOKIE, { path: '/' });
     return { ok: true };
   });
@@ -541,7 +584,7 @@ export async function buildApp(options: AppOptions = {}) {
   const dailyFive = new DailyFiveEngine(db, {
     rules: DAILY_FIVE_V2_RULES,
     displayNameForPlayer: (playerId) =>
-      playerId === 'demo' ? 'demo' : `player-${playerId.slice(0, 6)}`,
+      userById(db, playerId)?.displayName ?? `player-${playerId.slice(0, 6)}`,
     ...(requestedMode === 'live'
       ? {
           privateAssetIdentityForKey: (key: string) => {
@@ -587,7 +630,7 @@ export async function buildApp(options: AppOptions = {}) {
   const practice = new DailyFiveEngine(db, {
     rules: PRACTICE_RULES,
     displayNameForPlayer: (playerId) =>
-      playerId === 'demo' ? 'demo' : `player-${playerId.slice(0, 6)}`,
+      userById(db, playerId)?.displayName ?? `player-${playerId.slice(0, 6)}`,
     casePackFor: (dailyId: string, dayStart: number) =>
       createRandomPracticeCasePack(dailyId, dayStart, PRACTICE_RULES, practicePool),
     ...(requestedMode === 'live'
@@ -621,7 +664,7 @@ export async function buildApp(options: AppOptions = {}) {
   await registerDailyFiveRoutes(app, {
     engine: dailyFive,
     cookieName: AUTH_COOKIE,
-    playerId: (request) => request.cookies[AUTH_COOKIE] ?? request.cookies[COOKIE],
+    playerId: dailyFivePlayer,
   });
   app.get('/api/account/history', async (request) => dailyFive.history(authenticatedUser(request)));
   app.get('/api/leaderboards/all-time', async (request) => {
@@ -635,7 +678,7 @@ export async function buildApp(options: AppOptions = {}) {
     defaultMode: 'practice',
     leaderboardEnabled: false,
     cookieName: AUTH_COOKIE,
-    playerId: (request) => request.cookies[AUTH_COOKIE] ?? request.cookies[COOKIE],
+    playerId: dailyFivePlayer,
   });
   await registerHuntRoutes(app, {
     engine: hunt,

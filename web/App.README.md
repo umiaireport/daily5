@@ -2,15 +2,14 @@
 
 ## Purpose and sections
 
-`web/App.tsx` owns session/round/result state, navigation between arena/leaderboard/live views, API loading, clue unlock and choice lock actions, daily-entry locking, reset flow, error/loading states, and the page composition.
+`web/App.tsx` owns account login/registration, session/round/result state, navigation between arena/leaderboard/live views, API loading, clue unlock and choice lock actions, daily-entry locking, reset flow, error/loading states, and page composition.
 
 ## Functions
 
-- `App` — `web/App.tsx:24`: renders the full Whale Arena shell and view states.
-- `refreshDaily` — `web/App.tsx:42`: loads the public daily challenge and this session's official entry.
-- `load` — `web/App.tsx:53`: creates/resumes session, loads live status, daily state, and the current round/result.
-- `navigate` — `web/App.tsx:81`: loads leaderboard or live/daily status content.
-- `unlock` — `web/App.tsx:102`: posts a clue unlock and returns its content.
-- `lock` — `web/App.tsx:117`: posts an immutable tutorial allocation and refreshes session state.
-- `lockDaily` — `web/App.tsx:132`: posts the one immutable daily allocation and reloads its pending result.
-- `continueGame` — `web/App.tsx:145`: advances or resets after a reveal.
+- `Login` — `web/App.tsx:70`: switches between login and account creation while preserving the demo path.
+- `App` — `web/App.tsx:262`: renders the Daily5 shell and view states.
+- `leaderboardWindow` — `web/App.tsx:26`: keeps the top ten plus the signed-in player's nearby scores within the 21-row view.
+- `viewFromHash` — `web/App.tsx:45`: restores the selected shell view from the URL hash.
+- `loadRecords` — `web/App.tsx:293`: loads account history, all-time scores, today’s challenge, and today’s leaderboard.
+- `navigate` — `web/App.tsx:286`: changes the shell view and resets transient errors.
+- `logout` — `web/App.tsx:316`: signs out through the server session endpoint.

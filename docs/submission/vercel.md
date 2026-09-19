@@ -1,55 +1,58 @@
 # Vercel test deployment
 
-The repository includes a root [`index.ts`](../../index.ts) so Vercel can detect the Fastify server. Vercel serves the browser and API from the same Fastify function; the client bundle is already included in `public/` for this deployment path.
+The public repository is connected to the `umi-ai/daily5` Vercel project. It uses the Fastify preset and the root [`index.ts`](../../index.ts) entrypoint. Fastify serves both the built browser bundle and `/api/*) from the same deployment.
 
-## Safe first deployment
+## Current project configuration
 
-Import `umiaireport/daily5` into the logged-in Vercel account. Use the free/Hobby project for testing. Do not paste the Nansen key into the repository or into a client-side variable.
+- GitHub: `umiaireport/daily5`
+- Framework preset: Fastify
+- Public test URL: `https://daily5-umi-ai.vercel.app`
+- Database: `/tmp/daily5.sqlite` for the free test deployment
+- Vercel Authentication: disabled for the public test URL so login/API requests return JSON directly
+- Provider mode: live; the Nansen key is server-side only
 
-For the first smoke test, use these server environment variables:
+The free Vercel filesystem is ephemeral. SQLite accounts, sessions, attempts, and leaderboards can reset when a function instance is replaced. Use a persistent managed database before treating this as a durable public service.
+
+## Encrypted Project Environment Variables
+
+Vercel Project Settings → Environment Variables contains these Preview/Production values:
+
+```text
+NANSEN_API=<encrypted secret copied internally from workspace NANSEN_API2>
+DATA_MODE=live
+DAILY_FIVE_DOWNLOAD=true
+DAILY_FIVE_PROVIDER_SNAPSHOT=/tmp/daily-five-provider.json
+DATABASE_PATH=/tmp/daily5.sqlite
+NANSEN_CREDIT_BUDGET=160
+DAILY_FIVE_DOWNLOAD_BUDGET=160
+DAILY_FIVE_HISTORY_LAG_DAYS=2
+```
+
+The `NANSEN_API` value was copied directly from the existing workspace `NANSEN_API2` without printing it or committing it. Do not create a tracked `.env` containing that value. Vercel Secret variables are write-only after saving; the key remains inside the server function and is never exposed through Vite or the browser.
+
+`DAILY_FIVE_DOWNLOAD=true` is intentional for this test deployment: it tells a fresh function instance to collect provider data instead of silently using an old repository snapshot. The provider collector is budgeted at 160 credits, matching the existing one-time download script. This can spend credits on a fresh cold instance; turn it off only when choosing a warm-instance/demo configuration that is allowed to reuse the temporary `/tmp` pack.
+
+## Deployment checklist
+
+1. Push a commit to `main`.
+2. Wait for a Vercel deployment marked **Ready**.
+3. Open the public URL in a private browser window.
+4. Confirm the HTML shell loads.
+5. Test `demo/demo` login and account registration.
+6. Test `GET /api/daily-five/today`; in live mode it must return provider-backed rounds or a clear provider error, never a synthetic board.
+7. Complete one official or practice attempt and inspect the account/leaderboard views.
+8. Review Vercel logs for status messages only. Never copy a provider key or raw response into an issue, chat, or submission.
+
+## Safe synthetic fallback for development
+
+For a no-credit local or temporary Vercel smoke test, use only:
 
 ```text
 DATA_MODE=synthetic
 DATABASE_PATH=/tmp/daily5.sqlite
 ```
 
-The `/tmp` database is intentional for a smoke test. Vercel function storage is not a durable production database, so an instance restart can reset demo progress. A persistent database is needed for a real public leaderboard.
+Synthetic mode is clearly labelled and must not be used for the recording that claims provider-backed behavior.
 
-After deployment, test:
+Vercel’s [Fastify deployment guide](https://vercel.com/docs/frameworks/backend/fastify) documents the root entrypoint convention. Vercel’s [environment variable guidance](https://vercel.com/docs/environment-variables/sensitive-environment-variables) explains Config versus Secret values and the REST/CLI workflows used for the encrypted project settings.
 
-- `/` loads the Daily5 interface;
-- login works with `demo` / `demo`;
-- `/api/daily-five/today` returns five rounds;
-- one practice run can be completed;
-- the browser does not show “Daily Five could not connect.”
-
-## Enabling the provider-backed board
-
-Add these in Vercel Project Settings → Environment Variables. Select the environments where each variable should exist, normally **Preview** first and **Production** only after the preview works:
-
-```text
-NANSEN_API=<paste the verified key into Vercel only>
-DATA_MODE=live
-DATABASE_PATH=/tmp/daily5.sqlite
-DAILY_FIVE_PROVIDER_SNAPSHOT=/tmp/daily-five-provider-demo.json
-DAILY_FIVE_DOWNLOAD=true
-NANSEN_CREDIT_BUDGET=10
-DAILY_FIVE_DOWNLOAD_BUDGET=160
-```
-
-The download flag is deliberately separate from normal startup because it can spend provider credits. Use it only for the first live collection or when the saved `/tmp` pack is missing. After a successful warm deployment, turn `DAILY_FIVE_DOWNLOAD` off if the provider-backed pack is already available in that function instance. A cold instance may need a new collection because `/tmp` is temporary.
-
-Never define `NANSEN_API` with a `VITE_` prefix. Client-exposed Vite variables are not suitable for secrets. The server reads `NANSEN_API` and the browser never receives its value.
-
-## Vercel dashboard workflow
-
-1. Choose **Add New… → Project**.
-2. Import `umiaireport/daily5` from GitHub.
-3. Keep the repository root as the project root.
-4. Select the **Fastify** framework preset and leave the build command and output directory at their zero-configuration defaults.
-5. Add the synthetic smoke-test variables and deploy a Preview.
-6. Open the Preview URL and complete the checks above.
-7. Add `NANSEN_API` only after the synthetic page works, then redeploy Preview with the live variables.
-8. Inspect the deployment logs for the safe messages “Nansen data is ready” or “Saved Nansen Daily Five data is loaded locally.” Never log or paste the key.
-
-The official [Fastify on Vercel guide](https://vercel.com/docs/frameworks/backend/fastify) says Vercel detects a root `index.ts`, `app.ts`, or `server.ts` entrypoint and deploys the Fastify app as a function. The [Vercel environment-variable guidance](https://vercel.com/docs/frameworks/frontend/vite#environment-variables) explains why the Nansen key must remain server-side.

@@ -68,8 +68,10 @@ function dateLabel(value: string): string {
 }
 
 function Login({ onLogin }: { onLogin: (user: User) => void }) {
+  const [registering, setRegistering] = useState(false);
   const [username, setUsername] = useState('demo');
   const [password, setPassword] = useState('demo');
+  const [displayName, setDisplayName] = useState('');
   const [error, setError] = useState('');
   const [busy, setBusy] = useState(false);
 
@@ -78,7 +80,11 @@ function Login({ onLogin }: { onLogin: (user: User) => void }) {
     setBusy(true);
     setError('');
     try {
-      const user = await api<User>('/auth/login', { username, password });
+      const user = await api<User>(registering ? '/auth/register' : '/auth/login', {
+        username,
+        password,
+        ...(registering ? { displayName } : {}),
+      });
       onLogin(user);
     } catch (reason) {
       setError(reason instanceof Error ? reason.message : 'Unable to log in.');
@@ -104,8 +110,9 @@ function Login({ onLogin }: { onLogin: (user: User) => void }) {
           Own the score.
         </h1>
         <p className="daily5-login-copy">
-          Study the evidence, allocate your virtual wallet, and see whether your read can beat the
-          board. Finish strong, climb the rankings, and share your score.
+          Create your trader profile, study the evidence, allocate your virtual wallet, and see
+          whether your read can beat the board. Finish strong, climb the rankings, and share your
+          score.
         </p>
         <form onSubmit={submit} className="daily5-login-form">
           <label>
@@ -122,20 +129,56 @@ function Login({ onLogin }: { onLogin: (user: User) => void }) {
               type="password"
               value={password}
               onChange={(event) => setPassword(event.target.value)}
-              autoComplete="current-password"
+              minLength={registering ? 8 : undefined}
+              autoComplete={registering ? 'new-password' : 'current-password'}
             />
           </label>
+          {registering && (
+            <label>
+              Display name <span className="daily5-muted">(optional)</span>
+              <input
+                value={displayName}
+                onChange={(event) => setDisplayName(event.target.value)}
+                placeholder={username || 'How you appear on the board'}
+                autoComplete="nickname"
+              />
+            </label>
+          )}
           {error && (
             <p className="daily5-error" role="alert">
               {error}
             </p>
           )}
           <button className="daily5-button daily5-button--primary" disabled={busy}>
-            {busy ? 'Opening the board…' : 'Enter the board'} <Icon name="arrow" size={16} />
+            {busy ? 'Opening the board…' : registering ? 'Create account' : 'Enter the board'}{' '}
+            <Icon name="arrow" size={16} />
           </button>
         </form>
         <p className="daily5-demo-note">
-          Demo access: <code>demo</code> / <code>demo</code>
+          {registering ? (
+            <>
+              Already have an account?{' '}
+              <button
+                type="button"
+                className="daily5-inline-button"
+                onClick={() => setRegistering(false)}
+              >
+                Log in
+              </button>
+            </>
+          ) : (
+            <>
+              New here?{' '}
+              <button
+                type="button"
+                className="daily5-inline-button"
+                onClick={() => setRegistering(true)}
+              >
+                Create an account
+              </button>{' '}
+              · Demo: <code>demo</code> / <code>demo</code>
+            </>
+          )}
         </p>
       </section>
     </div>

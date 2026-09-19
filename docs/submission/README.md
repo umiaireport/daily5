@@ -1,188 +1,168 @@
-# Daily5 Meridian Buildathon submission
+# Daily5 submission runbook
 
-This is the single working checklist for taking Daily5 from the current local build to a safe public submission. Work from top to bottom. The goal is a short, reliable demonstration of one clear idea:
+This ordered workflow takes Daily5 from a clean checkout to a public Meridian Buildathon submission. Daily5 turns Nansen market evidence into a five-round reading challenge: players allocate a virtual wallet, lock one call per round, see the historical reveal, and compare their read with the board.
 
-> Daily5 turns Nansen market evidence into a five-round reading challenge. Players size a virtual wallet, lock one call per round, see the market answer after the cutoff, and compare their read with the board.
+Daily5 never places real trades, asks for wallet signatures, or presents a score as financial advice.
 
-Daily5 is a paper game. It does not execute trades, request wallet signatures, or present its score as financial advice.
+## 1. Rules and deliverables
 
-## 1. Rules that control the submission
+Use the local rules cache at [`../buildathon-rules.md`](../buildathon-rules.md), then recheck the official pages immediately before submitting:
 
-The official Meridian Buildathon rules are the source of truth. The local working copy is [`../buildathon-rules.md`](../buildathon-rules.md), with official links at the top. Recheck the official pages immediately before posting because dates and form requirements can change.
+- [Meridian Buildathon rules](https://release.nansen.ai/help/articles/3540155-nansen-meridian-buildathon-sep-14-27)
+- [Meridian campaign page](https://nansen.ai/campaigns/meridian-buildathon)
 
-The current requirements are:
-
-| Requirement | What we must deliver |
+| Deliverable | Location/status |
 | --- | --- |
-| Nansen use | Nansen data must drive important product behavior, not just appear as decoration. In Daily5 it supplies the provider-backed asset/evidence pack used by the challenge. |
-| API proof | The submitting account must have logged at least 1,000 Nansen API calls. Confirm this in the Nansen dashboard before the final submission; do not spend calls just to repeat the proof. |
-| Public demo post | Publish a public X post tagging `@nansen_ai`, include the public GitHub URL, and attach a 30–60 second screen recording. The recording needs to show the build running with live/provider-backed Nansen data. |
-| Public code | The GitHub repository must be public and contain a useful README and setup instructions. Never publish secrets, raw credentials, private user data, or local database files. |
-| Entry form | Submit the email address, public X post URL, and public GitHub URL. Submit once, after both public links work. |
+| Product source, tests, and setup | repository root; implemented |
+| Installation instructions | [`../../README.md`](../../README.md) |
+| Vercel settings | [`vercel.md`](vercel.md); configured for `umi-ai/daily5` |
+| Recording shot list | [`demo-script.md`](demo-script.md) |
+| Public repository | [github.com/umiaireport/daily5](https://github.com/umiaireport/daily5); pushed |
+| Public test deployment | `daily5-umi-ai.vercel.app`; verify after each push |
+| X post and campaign form | user publishes/submits after verification |
 
-The local rules snapshot lists the current deadline as **27 September 2026 at 23:59 UTC**. The [official Meridian rules](https://release.nansen.ai/help/articles/3540155-nansen-meridian-buildathon-sep-14-27) and [official campaign page](https://nansen.ai/campaigns/meridian-buildathon) must be checked again before submission.
+## 2. Dependencies and installation
 
-## 2. Ordered work plan
+### Required
 
-### Step 1 — Finish and review the documentation
+- Node.js `24.x` (`package.json` requires `>=24.0.0 <25`)
+- npm bundled with Node
+- Git for cloning/pushing
+- A modern browser
+- Playwright only for automated browser tests or recording assistance
 
-This step is the current local deliverable.
+Node 24 is required because the server uses built-in `node:sqlite`. No global Fastify, Vite, TypeScript, or database installation is required.
 
-- Read the root [`README.md`](../../README.md) first. It explains the product, local run commands, live/synthetic boundary, and the two submission documents.
-- Keep [`../buildathon-rules.md`](../buildathon-rules.md) as the local rules cache, but use the official links there for final verification.
-- Use [`vercel.md`](vercel.md) for the free Preview deployment and server-side Nansen environment setup.
-- Keep the product explanation short and concrete: evidence → player decision → reveal → score → leaderboard.
-- Explain that the saved provider snapshot is reused at normal startup. A normal restart must not spend Nansen credits.
-- Keep a clear distinction between `DATA_MODE=live` and explicit synthetic/practice mode. The UI must never call synthetic data live.
-- Before public release, replace any “local proof” wording with the current dashboard evidence if the Nansen account status has changed.
-
-### Step 2 — Select the correct Nansen account without exposing its key
-
-Daily5 now checks these names in this order:
-
-1. `NANSEN_API` — the submission key name to use.
-2. `NANSEN_API2` — legacy workspace fallback.
-3. `NANSEN_API_KEY` — second legacy fallback.
-
-The app only checks whether a non-empty key exists; it never renders or logs the key. We found an older `NANSEN_API2` entry in the workspace, but we did **not** copy a secret automatically. To use the account that already has the 1,000-call proof, set the same key locally under `NANSEN_API` in either `daily5/.env` or the workspace `.env` file. Do not paste the value into chat, a README, GitHub, X, or the submission form.
-
-After setting it, verify only the presence of the variable:
+### Clean setup
 
 ```bash
-cd /home/hekatlon/hekatlon/hackathlon/daily5
-set -a
-. ../.env
-set +a
-if [ -n "${NANSEN_API:-}" ]; then echo "NANSEN_API is configured"; else echo "NANSEN_API is missing"; fi
-```
-
-If the key is currently stored only as `NANSEN_API2`, the user should either rename/copy it locally to `NANSEN_API` or tell Codex where the already-authorized local configuration is. The value itself should not be sent through chat.
-
-### Step 3 — Verify the saved provider-backed pack before making calls
-
-The repository already contains `data/daily-five-provider-demo.json`, which is ignored by Git and is reused by live-mode startup. First run the app with `DATA_MODE=live` and inspect the UI/health status. Do not run a new download merely as a test.
-
-Only if the pack is missing, invalid, or too old for the recording should the user explicitly authorize a fresh collection:
-
-```bash
-cd /home/hekatlon/hekatlon/hackathlon/daily5
-DATA_MODE=live DAILY_FIVE_DOWNLOAD=true npm run download:daily-five
-```
-
-That one-time command can consume provider credits. Keep the normal server command free of `DAILY_FIVE_DOWNLOAD=true`; it should reuse the saved pack.
-
-The final live-mode check should show:
-
-- `DATA_MODE=live` in the server configuration;
-- a provider-backed/saved Nansen Daily Five status in the app;
-- five real provider assets and their evidence-driven charts/clues;
-- the attribution/source treatment in the interface;
-- no fallback to synthetic data while the screen says live.
-
-### Step 4 — Run the release quality gate
-
-From `daily5/`:
-
-```bash
+git clone https://github.com/umiaireport/daily5.git
+cd daily5
 npm ci
+cp .env.example .env
+npm run typecheck
+npm run build
+npm run dev
+```
+
+Open `http://127.0.0.1:8311`. The API is proxied at `http://127.0.0.1:8411`. `npm ci` installs the pinned dependencies: Fastify and its cookie/rate-limit/static plugins, React, Vite, Zod, TypeScript, `tsx`, Prettier, and Playwright.
+
+The seeded test login is:
+
+```text
+username: demo
+password: demo
+```
+
+The login screen also supports account creation. New users need a 3–40 character username and an 8–80 character password. The display name is used on the board.
+
+Before each public push:
+
+```bash
+npm run format:check
+npm run typecheck
+npm test
+npm run build
 npm run submission:check
 ```
 
-`submission:check` runs formatting, TypeScript validation, the test suite, and the production build. Resolve every failure before publishing. Then do one manual browser pass with the current live configuration:
+## 3. User database and saved progress
 
-1. Log in with the demo account.
-2. Open the Daily5 board and confirm the source/status text.
-3. Play one round without submitting a second official attempt.
-4. Inspect the reveal, scorecard, and both leaderboard views.
-5. Refresh and confirm the saved state still loads.
-6. Confirm practice mode is clearly separate from the official board.
+The server initializes these SQLite tables:
 
-### Step 5 — Prepare the recording
+- `users`: UUID, unique case-insensitive username, display name, scrypt password hash, creation time, and last login time.
+- `auth_sessions`: random session ID, user ID, creation time, and 30-day expiry.
 
-Use the shot list in [`demo-script.md`](demo-script.md). Keep the final cut between 30 and 60 seconds. The recording should show a working product quickly, not a terminal or code walkthrough:
+The browser receives an httpOnly same-origin `daily5_user` cookie containing only a revocable session ID. Passwords are never stored in plaintext, returned by the API, logged, or sent back to the browser. Logout deletes the session. Daily Five attempt and leaderboard rows use the authenticated user UUID, so accounts have separate progress and names. The `demo/demo` account is inserted idempotently in every new database.
 
-1. Daily5 landing/board with Nansen/provider-backed status visible.
-2. One evidence/clue inspection.
-3. A virtual allocation across the five assets.
-4. Locking the call and the reveal after the cutoff.
-5. Scorecard plus the daily/all-time leaderboard controls.
+Auth API:
 
-Narration is optional. Do not show a terminal containing environment variables, API keys, browser cookies, local paths with private information, or personal account details.
+```text
+POST /api/auth/register  { username, password, displayName? }
+POST /api/auth/login     { username, password }
+GET  /api/auth/me
+POST /api/auth/logout
+```
 
-### Step 6 — Create or connect the GitHub repository
+Local defaults to `./data/daily5.sqlite`. The free Vercel test uses `/tmp/daily5.sqlite`: it is writable but ephemeral, so a function restart can reset accounts and scores. That is suitable for a demo, not durable production. A real multi-user launch needs a persistent managed database for users, attempts, and leaderboards.
 
-The current machine does not have the `git` executable or a configured remote, so this step needs user setup before Codex can push.
+## 4. Nansen data modes
 
-The user should provide one of these paths:
+- `DATA_MODE=synthetic` is safe local development and is labelled synthetic.
+- `DATA_MODE=live` requires a server-side key. Names are checked in order: `NANSEN_API`, `NANSEN_API2`, `NANSEN_API_KEY`.
+- `DAILY_FIVE_DOWNLOAD=true` permits collection when no saved provider pack exists.
+- The one-time budget is `DAILY_FIVE_DOWNLOAD_BUDGET` (default `160`); normal local startup reuses the saved pack.
+- The browser never receives the key. Never use a `VITE_` prefix.
 
-- install Git and authenticate with GitHub using `gh auth login` or the normal Git credential flow; or
-- create an empty GitHub repository and provide its HTTPS/SSH remote URL, then authenticate locally without sending a password or token through chat.
+For local collection only, put the key in a private `.env` and run:
 
-Once Git is available, the safe sequence is:
+```bash
+DATA_MODE=live DAILY_FIVE_DOWNLOAD=true npm run download:daily-five
+```
+
+The command reports pack metadata only, not credentials or raw provider payloads.
+
+## 5. Ordered release workflow
+
+### Step 1 — Local QA
+
+Run synthetic mode, create an account, log out and back in, complete a practice round, inspect the official board, account history, and both leaderboard tabs. Run `npm run submission:check`.
+
+### Step 2 — Nansen proof
+
+The authorized workspace account is currently under `NANSEN_API2`. Do not paste it into chat or GitHub. The submitting Nansen dashboard must separately show the required 1,000-call proof; do not spend calls just to repeat that check.
+
+### Step 3 — Vercel
+
+The GitHub repository is connected to the `umi-ai/daily5` Vercel project using the Fastify preset and root `index.ts`. Follow [`vercel.md`](vercel.md). The key is stored as a Vercel Secret under `NANSEN_API`, not in a tracked `.env`.
+
+After each push, wait for a READY deployment and verify `/`, `demo/demo`, registration, `/api/daily-five/today`, one official/practice flow, account history, and both leaderboards.
+
+### Step 4 — Push
 
 ```bash
 cd /home/hekatlon/hekatlon/hackathlon/daily5
-git init
+git status --short
+npm run submission:check
 git add .
-git status --short --ignored
 git diff --cached --check
-git commit -m "Prepare Daily5 Meridian submission"
-git branch -M main
-git remote add origin <PUBLIC_GITHUB_REMOTE>
-git push -u origin main
+git commit -m "Prepare Daily5 submission"
+git push origin main
 ```
 
-Before the first `git add`, confirm that `.env`, `.env.*` except `.env.example`, `data/`, `dist/`, `node_modules/`, databases, backups, and recordings are ignored. The public repository must contain source, tests, fixtures, documentation, and the safe `.env.example`, not the local provider key or raw downloaded payloads.
+Before staging, confirm `.env`, `.env.*` except `.env.example`, `data/`, databases, `node_modules/`, Vercel files, backups, and recordings are ignored. The public repo contains source, tests, fixtures, and documentation, never credentials or raw provider data.
 
-After pushing, open the public URL in a private/incognito browser window and verify that the README, setup commands, and source tree are readable without GitHub login.
+### Step 5 — Record
 
-### Step 7 — Publish the X demo post
+Follow [`demo-script.md`](demo-script.md), keeping the video between 30 and 60 seconds:
 
-The user must publish this from the submitting X account because it requires the account identity and public link. Suggested copy:
+1. Daily5 board and provider status.
+2. Evidence/clue inspection.
+3. Virtual wallet allocation.
+4. Locked call and historical reveal.
+5. Scorecard and Today’s / All-time leaderboard.
+
+Do not show a terminal, API key, cookies, private dashboard, or personal information. The user captures the final recording from the logged-in desktop.
+
+### Step 6 — Public post
+
+From the submitting X account, publish a public post tagging `@nansen_ai`, include the GitHub URL, and attach the recording. Suggested copy:
 
 > Daily5 is a five-round market-reading game powered by Nansen data. Read the clues, size a virtual wallet, lock your call, and see who read the board best. Code: `<GitHub URL>` #NansenMeridian @nansen_ai
 
-Attach the 30–60 second recording. Keep the post public, tag `@nansen_ai`, and copy the final public post URL. Do not include an API key, raw response, or private dashboard screenshot.
+### Step 7 — Form
 
-### Step 8 — Complete the entry form
-
-Open the official entry form only after the public repository and X post have been tested:
+After the repo and post work in an incognito window, the user submits:
 
 ```text
 Email:       <submitting email>
-X post URL:  <public X post URL>
-GitHub URL:  <public repository URL>
+X post URL:  <public post URL>
+GitHub URL:  https://github.com/umiaireport/daily5
 ```
 
-The user must enter the email and submit the form. Use one submission for the account. Save the confirmation page or confirmation email for the project record, but do not commit it to GitHub.
+Keep the confirmation private. Finally record the commit hash, public URLs, Nansen proof, form confirmation, and video filename in a private note, then freeze the submitted build.
 
-### Step 9 — Final handoff
+## 6. Security checklist
 
-Record these final values somewhere private:
+Never commit or paste `NANSEN_API`, `NANSEN_API2`, `NANSEN_API_KEY`, Vercel tokens, wallet credentials, cookies, raw provider payloads, SQLite databases, private user records, form confirmations, or personal screenshots. Rotate a secret immediately if it is exposed.
 
-- public GitHub URL;
-- public X post URL;
-- form submission timestamp and confirmation;
-- Nansen dashboard proof that the 1,000-call requirement is satisfied;
-- the exact commit hash used for submission;
-- the video filename and a local/private backup.
-
-Then stop changing the submitted build unless a rules-required fix is needed. Any later code change should be a new commit and should be checked against the same recording flow.
-
-## 3. Current status and ownership
-
-| Item | Status | Owner / next action |
-| --- | --- | --- |
-| Product README and submission docs | Prepared locally | Codex; review the wording before publish. |
-| Nansen key precedence | Prepared locally | Codex changed the app to prefer `NANSEN_API`; user must set/confirm that local variable without sharing its value. |
-| Saved provider pack | Present locally | Codex verified the app path; user should approve any new provider download. |
-| Tests/build | Previously passing; rerun `npm run submission:check` before release | Codex. |
-| Git repository/remote | Not configured; Git executable is unavailable in this machine | User: install/authenticate Git or provide a configured environment. |
-| Public GitHub repository | Not created/pushed | User supplies account/repo destination; Codex can prepare and push after local authentication. |
-| Screen recording | Not captured | User runs the Debian capture steps in [`demo-script.md`](demo-script.md); Codex can review the resulting file if it is placed in the workspace. |
-| X post | Not published | User publishes from the submitting X account. |
-| Entry form | Not submitted | User submits after the two public links work. |
-
-## 4. Security boundary
-
-Never commit or paste any of the following: `NANSEN_API`, legacy API aliases, raw provider payloads, wallet credentials, cookies, local SQLite databases, private user records, form confirmation details, or personal account screenshots. If a key is accidentally exposed, revoke it before continuing.

@@ -508,6 +508,14 @@
 .daily5-demo-note code {
   color: var(--daily5-mint);
 }
+.daily5-inline-button {
+  padding: 0;
+  color: var(--daily5-mint);
+  border: 0;
+  background: transparent;
+  font: inherit;
+  text-decoration: underline;
+}
 
 @media (max-width: 850px) {
   .daily5-shell {

@@ -8,8 +8,9 @@ import { initializeHuntDatabase } from './hunt.js';
 import { initializeHuntV2Database } from './hunt-v2.js';
 import { initializeMatchmakingDatabase } from '../matchmaking/store.js';
 import { initializeProgressionDatabase } from './progression.js';
+import { initializeAuthDatabase } from './auth.js';
 
-export const SCHEMA_VERSION = 2;
+export const SCHEMA_VERSION = 3;
 
 /** Ordered additive migrations shared by the API, worker, and migration CLI. */
 export function initializeGameDatabases(db: DatabaseSync): void {
@@ -19,6 +20,7 @@ export function initializeGameDatabases(db: DatabaseSync): void {
   initializeHuntV2Database(db);
   initializeMatchmakingDatabase(db);
   initializeProgressionDatabase(db);
+  initializeAuthDatabase(db);
 }
 
 export function openDatabase(path: string): DatabaseSync {
