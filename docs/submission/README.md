@@ -30,6 +30,7 @@ This step is the current local deliverable.
 
 - Read the root [`README.md`](../../README.md) first. It explains the product, local run commands, live/synthetic boundary, and the two submission documents.
 - Keep [`../buildathon-rules.md`](../buildathon-rules.md) as the local rules cache, but use the official links there for final verification.
+- Use [`vercel.md`](vercel.md) for the free Preview deployment and server-side Nansen environment setup.
 - Keep the product explanation short and concrete: evidence → player decision → reveal → score → leaderboard.
 - Explain that the saved provider snapshot is reused at normal startup. A normal restart must not spend Nansen credits.
 - Keep a clear distinction between `DATA_MODE=live` and explicit synthetic/practice mode. The UI must never call synthetic data live.

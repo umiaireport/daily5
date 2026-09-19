@@ -12,6 +12,7 @@
     "format": "prettier --write \"{web,server,shared,fixtures,tests}/**/*.{ts,tsx,css}\" \"*.{ts,json}\"",
     "format:check": "prettier --check \"{web,server,shared,fixtures,tests}/**/*.{ts,tsx,css}\" \"*.{ts,json}\"",
     "build": "npm run typecheck && vite build",
+    "vercel-build": "npm run build",
     "submission:check": "npm run format:check && npm run typecheck && npm test && npm run build",
     "download:daily-five": "node --import tsx scripts/download-daily-five.ts",
     "start": "tsx server/index.ts",
