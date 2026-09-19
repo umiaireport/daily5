@@ -1,0 +1,17 @@
+node_modules/
+.git/
+.runtime/
+.runtime-*/
+.playwright-cli/
+data/
+dist/
+coverage/
+test-results/
+playwright-report/
+*.backup-*
+*.sqlite
+*.sqlite-*
+*.db
+.env
+.env.*
+!.env.example
