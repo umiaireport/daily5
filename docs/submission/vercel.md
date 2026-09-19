@@ -1,6 +1,6 @@
 # Vercel test deployment
 
-The repository includes a root [`index.ts`](../../index.ts) so Vercel can detect the Fastify server. Vercel builds the Vite client through the `vercel-build` script, then serves the browser and API from the same Fastify function.
+The repository includes a root [`index.ts`](../../index.ts) so Vercel can detect the Fastify server. Vercel serves the browser and API from the same Fastify function; the client bundle is already included in `public/` for this deployment path.
 
 ## Safe first deployment
 
@@ -46,7 +46,7 @@ Never define `NANSEN_API` with a `VITE_` prefix. Client-exposed Vite variables a
 1. Choose **Add New… → Project**.
 2. Import `umiaireport/daily5` from GitHub.
 3. Keep the repository root as the project root.
-4. Let Vercel detect the Fastify/Node project. The repository’s `vercel-build` script runs `npm run build`.
+4. Select the **Fastify** framework preset and leave the build command and output directory at their zero-configuration defaults.
 5. Add the synthetic smoke-test variables and deploy a Preview.
 6. Open the Preview URL and complete the checks above.
 7. Add `NANSEN_API` only after the synthetic page works, then redeploy Preview with the live variables.
