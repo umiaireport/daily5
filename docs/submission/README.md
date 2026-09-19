@@ -165,4 +165,3 @@ Keep the confirmation private. Finally record the commit hash, public URLs, Nans
 ## 6. Security checklist
 
 Never commit or paste `NANSEN_API`, `NANSEN_API2`, `NANSEN_API_KEY`, Vercel tokens, wallet credentials, cookies, raw provider payloads, SQLite databases, private user records, form confirmations, or personal screenshots. Rotate a secret immediately if it is exposed.
-

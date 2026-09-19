@@ -55,4 +55,3 @@ DATABASE_PATH=/tmp/daily5.sqlite
 Synthetic mode is clearly labelled and must not be used for the recording that claims provider-backed behavior.
 
 Vercel’s [Fastify deployment guide](https://vercel.com/docs/frameworks/backend/fastify) documents the root entrypoint convention. Vercel’s [environment variable guidance](https://vercel.com/docs/environment-variables/sensitive-environment-variables) explains Config versus Secret values and the REST/CLI workflows used for the encrypted project settings.
-
