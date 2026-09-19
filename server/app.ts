@@ -768,7 +768,7 @@ export async function buildApp(options: AppOptions = {}) {
     };
   });
   if (options.serveStatic) {
-    const root = resolve('dist');
+    const root = resolve('public');
     if (!existsSync(resolve(root, 'index.html')))
       throw new Error('Build the web app before starting production: npm run build');
     await app.register(staticFiles, { root });

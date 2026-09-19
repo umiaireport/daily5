@@ -3,6 +3,7 @@ import react from '@vitejs/plugin-react';
 
 export default defineConfig({
   plugins: [react()],
+  publicDir: false,
   server: {
     proxy: { '/api': 'http://127.0.0.1:8411', '/healthz': 'http://127.0.0.1:8411' },
     fs: {
@@ -19,5 +20,5 @@ export default defineConfig({
       ],
     },
   },
-  build: { outDir: 'dist', sourcemap: false },
+  build: { outDir: 'public', emptyOutDir: false, sourcemap: false },
 });
