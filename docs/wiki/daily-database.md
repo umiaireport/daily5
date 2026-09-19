@@ -1,0 +1,3 @@
+# `server/db/daily.ts`
+
+`initializeDailyDatabase` (`server/db/daily.ts:20`) creates additive challenge, entry, lease, and private settlement-source tables. `registerDailySettlementSources` (`server/db/daily.ts:50`) pins three immutable provider/synthetic references without putting them in the public payload. `dailySettlementSources` (`server/db/daily.ts:118`) and `pendingDailyChallenges` (`server/db/daily.ts:150`) are worker-only reads. `acquireDailyLease` (`server/db/daily.ts:158`) atomically claims or renews a lease for one owner, and `releaseDailyLease` (`server/db/daily.ts:186`) removes only that owner’s lease.

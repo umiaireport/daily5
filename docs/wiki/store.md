@@ -1,0 +1,3 @@
+# `server/db/store.ts`
+
+`SCHEMA_VERSION` (`server/db/store.ts:5`) is the supported schema number. `openDatabase` (`server/db/store.ts:7`) creates the parent directory, opens Node 24 SQLite, enables WAL/foreign keys/busy timeout, creates schema v2 tables, rejects newer databases, and migrates existing choices into `round_reviews` so saved results remain reviewable after restart. `transaction` (`server/db/store.ts:44`) wraps an action in `BEGIN IMMEDIATE` and rolls back on error. The separate daily tables are additive helpers initialized explicitly by `initializeDailyDatabase`, not by the game app.
