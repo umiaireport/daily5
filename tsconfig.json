@@ -10,8 +10,7 @@
     "esModuleInterop": true,
     "resolveJsonModule": true,
     "allowImportingTsExtensions": true,
-    "noEmit": true,
-    "types": ["node", "vite/client"]
+    "noEmit": true
   },
   "include": ["web", "server", "shared", "tests", "*.ts"]
 }

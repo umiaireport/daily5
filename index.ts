@@ -1,6 +1,10 @@
+import Fastify from 'fastify';
 import { existsSync } from 'node:fs';
 import { loadEnvFile } from 'node:process';
 import { buildApp } from './server/app.js';
+
+// Keep the framework import in the root entrypoint so Vercel can detect Fastify.
+void Fastify;
 
 // Vercel supplies project environment variables directly. Loading a local .env
 // keeps `vercel dev` and a normal Node production smoke test equivalent.
