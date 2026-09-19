@@ -43,6 +43,10 @@ The `NANSEN_API` value was copied directly from the existing workspace `NANSEN_A
 7. Complete one official or practice attempt and inspect the account/leaderboard views.
 8. Review Vercel logs for status messages only. Never copy a provider key or raw response into an issue, chat, or submission.
 
+## Provider-credit gate
+
+The latest public smoke test confirmed that the HTML shell, `demo/demo` login, and account registration work. The provider-backed `GET /api/daily-five/today` route can return `503` with a controlled `Nansen rejected the request because the configured account has insufficient API credits` message when the mapped `NANSEN_API2` account has no remaining credits. This is an external provider-account state, not a login or JSON-parsing bug. Replenish or authorize a funded Nansen account before recording the live submission; do not hide the state by switching to an old snapshot.
+
 ## Safe synthetic fallback for development
 
 For a no-credit local or temporary Vercel smoke test, use only:
