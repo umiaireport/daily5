@@ -1,3 +1,0 @@
-# `tests/daily.test.ts`
-
-`setup` (`tests/daily.test.ts:41`) prepares a temporary or in-memory SQLite database, daily tables, a game session, a published challenge, and a controllable clock; nested `at` (`tests/daily.test.ts:52`) moves that clock. Test callbacks are `tests/daily.test.ts:58` (publication/evidence/rules), `tests/daily.test.ts:101` (entry window/idempotency), `tests/daily.test.ts:126` (settlement immutability), `tests/daily.test.ts:157` (pending-to-void), `tests/daily.test.ts:194` (restart persistence), and `tests/daily.test.ts:218` (lease ownership/expiry). These tests prove the domain contract; `tests/api.test.ts:211` additionally proves the HTTP publication, one-entry lock, and pending-result wiring. Automated provider settlement remains a release gate.

@@ -1,5 +1,0 @@
-# `server/domain/live.ts`
-
-`collectLiveScenario` (`server/domain/live.ts:316`) requests token screener discovery, Smart Money netflow, token information, Flow Intelligence, and OHLCV evidence through the isolated client. `normalizeCandidates` (`server/domain/live.ts:165`) removes stablecoins, duplicates, and low-liquidity rows before selecting three assets. `closeSeries` (`server/domain/live.ts:109`) and `volumeSeries` (`server/domain/live.ts:123`) use verified candle data for replay charts when present. `makeAsset` (`server/domain/live.ts:183`) creates composite flow, buyer, pulse, volume, and Smart Money context with an observation timestamp and Nansen attribution. `LiveCollectionError` (`server/domain/live.ts:72`) keeps insufficient or unsafe provider data out of the game.
-
-The live Hunt board is created by `createLiveHuntBoardFactory` (`server/domain/hunt/live-board.ts:56`). It rotates the selected assets by match and round, so different matches receive different zone assignments while the server retains authoritative action effects.

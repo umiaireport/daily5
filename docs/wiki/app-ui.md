@@ -1,3 +1,0 @@
-# `web/App.tsx`
-
-`App` (`web/App.tsx:24`) composes the shell and view states. `refreshDaily` (`web/App.tsx:42`) loads the public daily challenge and session entry. `load` (`web/App.tsx:53`) creates/resumes a session, loads live status, daily state, and its round/result. `navigate` (`web/App.tsx:81`) loads leaderboard/live status. `unlock` (`web/App.tsx:102`) posts a clue unlock. `lock` (`web/App.tsx:117`) posts the tutorial choice and refreshes progress. `lockDaily` (`web/App.tsx:132`) posts the official daily allocation. `continueGame` (`web/App.tsx:145`) advances or resets an expedition. UI copy visibly distinguishes synthetic tutorial, attributable Nansen live replay, and the pinned daily entry state.

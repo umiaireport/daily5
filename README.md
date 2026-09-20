@@ -1,65 +1,49 @@
 # Daily5
 
-Daily5 is the standalone daily challenge extracted from Whale Arena. It keeps the Daily Five research surface—five mystery asset cards, charts, clues, allocation controls, immediate reveal, and scorecard—without exposing Whale Hunt.
+Daily5 is a five-round market-reading game built for the Nansen Meridian Buildathon. Nansen-backed market evidence becomes research clues; players allocate a virtual wallet, lock a decision, and inspect the historical result. It never places real trades.
 
-## About Daily5
+## Quick start
 
-Daily5 is a five-round market-reading game built for the Nansen Meridian Buildathon. Nansen-backed market evidence becomes research clues, the player allocates a virtual wallet, and the board reveals the historical result after the round closes. It never places real trades.
-
-## Product behavior
-
-- **Daily challenge:** one immutable five-round UTC challenge per day. The official result is saved to the signed-in account, and the final screen says to try again tomorrow.
-- **Practice Arena:** one round with five randomly selected assets from the loaded Nansen provider pool. Practice can be replayed and never enters a leaderboard. When provider data is not available, the board is explicitly labelled synthetic.
-- **Account:** create an account in the login screen, or use the seeded demo login `demo` / `demo`. Passwords are scrypt-hashed in SQLite and the browser receives only an httpOnly session cookie. Completed official results remain visible after a day rolls over.
-- **Records:** the current day’s official board, frozen historical day boards, and an all-time top-100 official leaderboard are server-owned. Practice is excluded.
-
-## Dependencies
-
-The complete installation uses:
-
-- Node.js 24.x and npm
-- PostgreSQL 15 or newer for durable users, attempts, and leaderboards
-- A Nansen API account and server-side API key for provider-backed live data
-- Git and a modern browser
-
-The current local fallback opens SQLite through Node 24’s built-in `node:sqlite`, so synthetic tests can run without a database server. That fallback is intentionally not durable and must not be described as a production account database. A complete multi-user installation must provide the PostgreSQL service and connect the application’s database adapter to its `DATABASE_URL`.
-
-## Run locally
-
-Node 24 is required because the local fallback uses the built-in `node:sqlite` module. Install and start PostgreSQL before configuring the durable installation. The copy-paste setup brief for an installation agent is in [`docs/ai-install-prompt.md`](docs/ai-install-prompt.md).
+Requirements: Node.js 24.x, npm, and a modern browser. A Nansen key is not required for the local synthetic experience.
 
 ```text
+cd app
+cp .env.example .env
 npm ci
-npm run dev              # web http://127.0.0.1:8311, API http://127.0.0.1:8411
-npm run typecheck
-npm run format:check
-npm run build
+npm run dev
 ```
 
-`npm ci` installs the pinned runtime and build dependencies from `package-lock.json`: Fastify, cookie/rate-limit/static plugins, React, Vite, Zod, TypeScript, `tsx`, Prettier, and Playwright. No global package installation is required.
+Open `http://127.0.0.1:8311`. The API runs at `http://127.0.0.1:8411`. Use the demo account `demo` / `demo`, or create a local account.
 
-For the durable configuration, set `DATABASE_URL` to the PostgreSQL connection string supplied by the local PostgreSQL server or managed PostgreSQL provider. Do not put that connection string, the Nansen key, or any other secret in GitHub. The checked-in `.env.example` is a safe template; the local `.env` file is ignored by Git.
+For complete setup, live-data configuration, and verification commands, read [`INSTALLATION.md`](INSTALLATION.md). The AI-assisted setup prompt is in [`AI_INSTALL_PROMPT.md`](AI_INSTALL_PROMPT.md).
 
-Open `http://127.0.0.1:8311` and log in with `demo` / `demo`.
+## How the app works
 
-The app is safe to run without a provider key: local synthetic mode is explicit and labelled as synthetic. Live mode requires a Nansen API account with available credits. To load provider-backed historical assets, configure `DATA_MODE=live`, `NANSEN_API` (the legacy `NANSEN_API2` and `NANSEN_API_KEY` aliases remain supported), and run the one-time collection flow:
+- Daily Five presents five mystery assets, charts, clues, allocation controls, and an immediate result after each round.
+- Practice uses the saved provider asset pack when available and labels synthetic data clearly when live data is not configured.
+- The virtual wallet compounds through five rounds; clues are factual observations, not trading advice.
+- Account history and official leaderboards are stored by the local app. Practice results do not enter official leaderboards.
+
+## Nansen data
+
+Synthetic mode is the safe default. To collect provider-backed historical assets, put the server-side key in `app/.env`, set `DATA_MODE=live`, and run the one-time download from `app/`:
 
 ```text
 DATA_MODE=live DAILY_FIVE_DOWNLOAD=true npm run download:daily-five
 ```
 
-The saved provider pack is reused on restart, so normal local app startup does not spend provider credits. Practice draws a fresh five-asset board from that immutable provider pool for each new practice attempt. Provider calls are bounded by `NANSEN_CREDIT_BUDGET`; never enable live mode without a funded, permitted key. Run `npm run quality:check` to verify the local app.
+The saved provider pack is reused on restart. Provider calls are bounded by `NANSEN_CREDIT_BUDGET`; never put a key in source code or a browser environment variable. See [`app/docs/NANSEN_API.md`](app/docs/NANSEN_API.md) for the data settings.
 
-## Main routes
+## Repository layout
 
-- `POST /api/auth/register`, `POST /api/auth/login`, `GET /api/auth/me`, `POST /api/auth/logout`
-- `GET /api/daily-five/today` and the Daily Five attempt/clue/ticket/continue routes
-- `GET /api/practice/today` and the same attempt routes under `/api/practice` (no leaderboard route)
-- `GET /api/account/history`
-- `GET /api/leaderboards/all-time`
-
-Official starts for an old day are rejected after UTC rollover, while the published case pack and its results remain readable. This is the frozen-leaderboard boundary.
-
-## Scope notes
-
-`IMPLEMENTATION_PROMPT.md` is the implementation brief used for this split. The copied legacy server modules remain available for compatibility, but the Daily5 UI does not link to Whale Hunt or the old arena.
+```text
+app/
+  server/       Fastify API and game logic
+  web/          React interface
+  shared/       Shared game contracts
+  fixtures/     Deterministic synthetic data
+  data/         Saved provider pack and ignored local database files
+  docs/         App usage and Nansen data notes
+  screenshots/  Current production app captures
+  tests/        Unit, API, and browser tests
+```

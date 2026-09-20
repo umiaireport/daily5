@@ -4,6 +4,9 @@ node_modules/
 .runtime-*/
 dist/
 data/
+!app/data/
+app/data/*
+!app/data/daily-five-provider-demo.json
 .env
 .env.*
 !.env.example
