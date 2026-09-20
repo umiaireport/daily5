@@ -20,5 +20,5 @@ export default defineConfig({
       ],
     },
   },
-  build: { outDir: 'public', emptyOutDir: false, sourcemap: false },
+  build: { outDir: 'public', emptyOutDir: true, sourcemap: false },
 });

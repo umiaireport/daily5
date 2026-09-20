@@ -154,52 +154,15 @@ export const DAILY_FIVE_V2_RULES: DailyFiveV2Rules = {
   cohort: 'daily-five-v2',
 };
 
-export interface HuntRules {
-  readonly version: 'hunt-v1';
-  readonly assets: 6;
-  readonly maxAssets: 10;
-  readonly totalRounds: 5;
-  readonly primaryTargetUnits: 8;
-  readonly secondaryTargetUnits: 4;
-  readonly maxPurchaseUnitsPerRound: 4;
-  readonly maxPurchaseUnitsPerMatch: 16;
-  readonly maxDecoyUnitsPerMatch: 4;
-  readonly maxDecoyUnitsPerAsset: 2;
-  readonly oneVsOneScansPerRound: 3;
-  readonly crewScansPerRound: 5;
-}
-
-export const HUNT_RULES: HuntRules = {
-  version: 'hunt-v1',
-  assets: 6,
-  maxAssets: 10,
-  totalRounds: 5,
-  primaryTargetUnits: 8,
-  secondaryTargetUnits: 4,
-  maxPurchaseUnitsPerRound: 4,
-  maxPurchaseUnitsPerMatch: 16,
-  maxDecoyUnitsPerMatch: 4,
-  maxDecoyUnitsPerAsset: 2,
-  oneVsOneScansPerRound: 3,
-  crewScansPerRound: 5,
-};
-
 export type ErrorCode =
   | 'INVALID_COMMAND'
   | 'INVALID_PHASE'
-  | 'INVALID_ROLE'
   | 'NOT_FOUND'
   | 'FORBIDDEN'
   | 'STALE_STATE'
   | 'IDEMPOTENCY_CONFLICT'
   | 'DUPLICATE_COMMAND'
-  | 'INVALID_TARGETS'
-  | 'INVALID_PLAN'
-  | 'INSUFFICIENT_SCANS'
-  | 'DATA_UNAVAILABLE'
-  | 'TIMEOUT'
-  | 'VOIDED'
-  | 'ALREADY_COMPLETE';
+  | 'UNAVAILABLE';
 
 export interface ApiError {
   readonly code: ErrorCode;

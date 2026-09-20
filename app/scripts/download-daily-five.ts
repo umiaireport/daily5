@@ -3,7 +3,6 @@ import { loadEnvFile } from 'node:process';
 
 for (const file of ['.env', '../.env', '../../.env']) if (existsSync(file)) loadEnvFile(file);
 process.env.DATA_MODE = 'live';
-process.env.NANSEN_LIVE_HUNT = 'false';
 // buildApp refreshes the current provider-backed pack when the same-day snapshot
 // is missing. This command makes that refresh explicit for operators who want it.
 

@@ -21,7 +21,6 @@ import {
   EVIDENCE_RULES_VERSION,
   LIQUIDATION_PRESETS,
   type CompiledDailyCase,
-  type CompiledHuntBoard,
   type CoverageRecord,
   type DerivedClues,
   type EvidenceRecordInput,
@@ -48,14 +47,6 @@ export interface DailyCaseCompileInput extends Omit<
 
 export interface CompileOptions extends ClueDerivationOptions {
   readonly allowPracticePartial?: boolean;
-  readonly rulesVersion?: string;
-  readonly contentVersion?: string;
-}
-
-export interface HuntBoardCompileInput {
-  readonly boardId: string;
-  readonly cases: readonly (CompiledDailyCase | DailyCaseCompileInput)[];
-  readonly sourceKind?: SourceKind;
   readonly rulesVersion?: string;
   readonly contentVersion?: string;
 }
@@ -335,48 +326,6 @@ export function compileDailyCase(
 
 function isCompiled(value: CompiledDailyCase | DailyCaseCompileInput): value is CompiledDailyCase {
   return 'kind' in value && value.kind === 'daily-case';
-}
-
-/** Compile the fixed historical evidence board used by Hunt while keeping case details private. */
-export function compileHuntBoard(
-  input: HuntBoardCompileInput,
-  options: CompileOptions = {},
-): CompiledHuntBoard {
-  if (!input.boardId.trim())
-    throw new EvidenceValidationError('invalid-record', 'A hunt board needs an id.');
-  if (input.cases.length < 6 || input.cases.length > 10)
-    throw new EvidenceValidationError(
-      'incomplete-coverage',
-      'A hunt board needs six to ten assets.',
-    );
-  const cases = input.cases.map((value) =>
-    isCompiled(value) ? value : compileNormalized(value, options),
-  );
-  const sourceKind = input.sourceKind ?? cases[0]!.sourceKind;
-  if (cases.some((value) => value.sourceKind !== sourceKind))
-    throw new EvidenceValidationError('invalid-record', 'A hunt board cannot mix source kinds.');
-  const realAssets = new Set<string>();
-  for (const value of cases) {
-    const key = `${value.chain.toLowerCase()}:${value.tokenAddress.toLowerCase()}`;
-    if (realAssets.has(key))
-      throw new EvidenceValidationError('invalid-record', 'A hunt board repeats a real asset.');
-    realAssets.add(key);
-  }
-  const publicAssets = cases.map((value, index) => ({
-    ...value.publicEvidence,
-    attemptAlias: alias(index),
-    colorIndex: index,
-  }));
-  return Object.freeze({
-    kind: 'hunt-board' as const,
-    boardId: input.boardId,
-    sourceKind,
-    cutoffAt: cases[0]!.cutoffAt,
-    assets: Object.freeze(cases),
-    publicAssets: Object.freeze(publicAssets),
-    rulesVersion: input.rulesVersion ?? options.rulesVersion ?? EVIDENCE_RULES_VERSION,
-    contentVersion: input.contentVersion ?? options.contentVersion ?? EVIDENCE_CONTENT_VERSION,
-  });
 }
 
 export function toPublicAssetEvidence(

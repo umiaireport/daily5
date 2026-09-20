@@ -3,9 +3,6 @@ import { createHash, randomUUID } from 'node:crypto';
 /** Documentation-derived paths and estimates; live contracts are smoke-tested at collection time. */
 export const NANSEN_OPERATIONS = {
   liveCandidates: { path: '/api/v1/token-screener', credits: 1, ttlMs: 300_000 },
-  liveSmartMoneyNetflow: { path: '/api/v1/smart-money/netflow', credits: 5, ttlMs: 300_000 },
-  liveTokenInfo: { path: '/api/v1/tgm/token-information', credits: 1, ttlMs: 300_000 },
-  liveFlow: { path: '/api/v1/tgm/flow-intelligence', credits: 1, ttlMs: 300_000 },
   liveCandles: { path: '/api/v1/tgm/token-ohlcv', credits: 1, ttlMs: 60_000 },
   liveTrades: { path: '/api/v1/tgm/dex-trades', credits: 1, ttlMs: 300_000 },
 } as const;

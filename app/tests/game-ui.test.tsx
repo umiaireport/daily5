@@ -8,10 +8,8 @@ import {
   CluePanel,
   ClueTile,
   DirectionToggle,
-  EvidencePin,
   LeverageControl,
   OutcomeStrip,
-  PlayerSeat,
   PriceChart,
   RoundProgress,
   SourceLabel,
@@ -21,7 +19,6 @@ import {
 import {
   SYNTHETIC_DAILY_FIVE,
   SYNTHETIC_DAILY_SAVED_RESULT,
-  SYNTHETIC_HUNT_TRACER_VIEW,
   SYNTHETIC_REVEALED_CLUE,
 } from '../fixtures/synthetic/contracts.js';
 
@@ -108,14 +105,9 @@ test('controls expose text, keyboard semantics, and locked states', () => {
   assert.match(controls, /disabled/);
 });
 
-test('hunt and result primitives carry role, source, pin, and liquidation text', () => {
+test('result primitives carry source and liquidation text', () => {
   const markup = renderToStaticMarkup(
     <>
-      <PlayerSeat
-        participant={SYNTHETIC_HUNT_TRACER_VIEW.participants[1]!}
-        namespace="whale-hunt"
-      />
-      <EvidencePin evidence={SYNTHETIC_REVEALED_CLUE} pinned namespace="whale-hunt" />
       <SourceLabel sourceKind="synthetic" coverage={asset.coverage} namespace="daily-five" />
       <CapitalSummary
         startingCapital="50000.00"
@@ -126,8 +118,6 @@ test('hunt and result primitives carry role, source, pin, and liquidation text',
       <OutcomeStrip result={SYNTHETIC_DAILY_SAVED_RESULT.result} namespace="daily-five" />
     </>,
   );
-  assert.match(markup, /Computer/);
-  assert.match(markup, /Pinned for the team/);
   assert.match(markup, /Synthetic fixture/);
   assert.match(markup, /\$50,?000\.00/);
   assert.match(markup, /Ticket equity/);
@@ -140,5 +130,4 @@ test('visual system CSS keeps interaction targets, focus, responsive, and reduce
   assert.match(css, /max-width:\s*360px/);
   assert.match(css, /prefers-reduced-motion/);
   assert.match(css, /\.daily-five/);
-  assert.match(css, /\.whale-hunt/);
 });

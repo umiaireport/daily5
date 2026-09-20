@@ -1,6 +1,6 @@
 # Daily5
 
-Daily5 is a five-round market-reading game built for the Nansen Meridian Buildathon. Nansen-backed market evidence becomes research clues; players allocate a virtual wallet, lock a decision, and inspect the historical result. It never places real trades.
+Daily5 is a five-round market-reading game. It turns historical Nansen market evidence into research clues; players allocate a virtual wallet, lock a decision, and inspect the historical result. It never places real trades.
 
 ## Quick start
 
@@ -15,12 +15,12 @@ npm run dev
 
 Open `http://127.0.0.1:8311`. The API runs at `http://127.0.0.1:8411`. Use the demo account `demo` / `demo`, or create a local account.
 
-For complete setup, live-data configuration, and verification commands, read [`INSTALLATION.md`](INSTALLATION.md). The AI-assisted setup prompt is in [`AI_INSTALL_PROMPT.md`](AI_INSTALL_PROMPT.md).
+For complete setup and live-data configuration, read [`INSTALLATION.md`](INSTALLATION.md). The AI-assisted setup prompt is in [`AI_INSTALL_PROMPT.md`](AI_INSTALL_PROMPT.md).
 
 ## How the app works
 
 - Daily Five presents five mystery assets, charts, clues, allocation controls, and an immediate result after each round.
-- Practice selects a fresh one-round board from the available provider pool and labels synthetic data clearly when live data is not configured.
+- Practice selects a fresh one-round board from the available asset pool and labels synthetic data clearly when live data is not configured.
 - The virtual wallet compounds through five rounds; clues are factual observations, not trading advice.
 - Account history and official leaderboards are stored by the local app. Practice results do not enter official leaderboards.
 
@@ -44,6 +44,6 @@ app/
   fixtures/     Deterministic synthetic data
   data/         Saved provider pack and ignored local database files
   docs/         App usage and Nansen data notes
-  screenshots/  Current production app captures
+  screenshots/  Current Daily5 app captures
   tests/        Unit, API, and browser tests
 ```

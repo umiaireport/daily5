@@ -51,7 +51,7 @@ export interface DailyFiveTicketRow {
   locked_at: string;
 }
 
-/** Creates the additive Daily Five tables and indexes without touching legacy records. */
+/** Creates the Daily5 tables and indexes used by the published board and attempts. */
 export function initializeDailyFiveDatabase(db: DatabaseSync): void {
   db.exec(`
     CREATE TABLE IF NOT EXISTS daily_five_days (
@@ -131,9 +131,6 @@ export interface DailyFiveResetCounts {
   readonly commands: number;
   readonly startCommands: number;
   readonly reviews: number;
-  readonly progressionResults: number;
-  readonly progressionBadges: number;
-  readonly progressionShares: number;
 }
 
 function countRows(db: DatabaseSync, table: string, condition = ''): number {
@@ -148,7 +145,7 @@ function countRows(db: DatabaseSync, table: string, condition = ''): number {
   );
 }
 
-/** Clears local Daily Five attempts and projections while preserving published case packs. */
+/** Clears local Daily5 attempts while preserving published case packs. */
 export function resetDailyFiveState(db: DatabaseSync): DailyFiveResetCounts {
   return transaction(db, () => {
     const counts: DailyFiveResetCounts = {
@@ -158,13 +155,6 @@ export function resetDailyFiveState(db: DatabaseSync): DailyFiveResetCounts {
       commands: countRows(db, 'daily_five_commands'),
       startCommands: countRows(db, 'daily_five_start_commands'),
       reviews: countRows(db, 'daily_five_reviews'),
-      progressionResults: countRows(db, 'progression_daily_results'),
-      progressionBadges: countRows(
-        db,
-        'progression_badges',
-        "badge_id IN ('first-five','clear-reading')",
-      ),
-      progressionShares: countRows(db, 'progression_shares', "activity='daily-five'"),
     };
     db.exec(`
       DELETE FROM daily_five_commands;
@@ -173,9 +163,6 @@ export function resetDailyFiveState(db: DatabaseSync): DailyFiveResetCounts {
       DELETE FROM daily_five_clues;
       DELETE FROM daily_five_tickets;
       DELETE FROM daily_five_attempts;
-      DELETE FROM progression_daily_results;
-      DELETE FROM progression_badges WHERE badge_id IN ('first-five','clear-reading');
-      DELETE FROM progression_shares WHERE activity='daily-five';
     `);
     return counts;
   });

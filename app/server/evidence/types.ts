@@ -149,17 +149,6 @@ export interface CompiledDailyCase {
   readonly publicEvidence: PublicAssetEvidence;
 }
 
-export interface CompiledHuntBoard {
-  readonly kind: 'hunt-board';
-  readonly boardId: string;
-  readonly sourceKind: SourceKind;
-  readonly cutoffAt: string;
-  readonly assets: readonly CompiledDailyCase[];
-  readonly publicAssets: readonly PublicAssetEvidence[];
-  readonly rulesVersion: string;
-  readonly contentVersion: string;
-}
-
 export interface VariantPack {
   readonly variantId: string;
   readonly cases: readonly CompiledDailyCase[];

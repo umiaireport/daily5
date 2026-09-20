@@ -109,9 +109,9 @@ test('Daily Five reconnects without starting another v2 attempt', async ({ page 
 test('Daily Five missing attempt offers explicit practice recovery', async ({ page }, info) => {
   await openV2(page);
   await page.evaluate(() => {
-    const stored = JSON.parse(localStorage.getItem('whale-arena.daily-five.attempt')!);
+    const stored = JSON.parse(localStorage.getItem('daily5.official.attempt')!);
     localStorage.setItem(
-      'whale-arena.daily-five.attempt',
+      'daily5.official.attempt',
       JSON.stringify({ ...stored, attemptId: 'missing-attempt' }),
     );
   });

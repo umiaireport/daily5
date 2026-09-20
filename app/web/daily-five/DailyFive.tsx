@@ -1509,9 +1509,7 @@ function DailyFivePortfolioExperience({
     if (!round) return;
     try {
       const saved = JSON.parse(
-        localStorage.getItem(
-          `whale-arena.daily-five-v2.${attempt.attemptId}.${round.roundIndex}`,
-        ) ?? '{}',
+        localStorage.getItem(`daily5.daily-five.${attempt.attemptId}.${round.roundIndex}`) ?? '{}',
       ) as unknown;
       if (saved && typeof saved === 'object' && !Array.isArray(saved)) {
         const next: Record<string, number> = {};
@@ -1549,7 +1547,7 @@ function DailyFivePortfolioExperience({
     if (!roundIndex) return;
     try {
       localStorage.setItem(
-        `whale-arena.daily-five-v2.${attempt.attemptId}.${roundIndex}`,
+        `daily5.daily-five.${attempt.attemptId}.${roundIndex}`,
         JSON.stringify({ weights, leverage }),
       );
     } catch {

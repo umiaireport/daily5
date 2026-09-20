@@ -4,8 +4,8 @@ import { existsSync } from 'node:fs';
 import { buildApp } from '../server/app.js';
 
 test(
-  'built production app serves the bundle, secure sessions and API without exposing source',
-  { skip: !existsSync('dist/index.html') },
+  'built production app serves the Daily5 bundle and API without exposing source',
+  { skip: !existsSync('public/index.html') },
   async (t) => {
     const app = await buildApp({ databasePath: ':memory:', production: true, serveStatic: true });
     t.after(() => app.close());
@@ -17,17 +17,12 @@ test(
     const bundle = await app.inject(asset);
     assert.equal(bundle.statusCode, 200);
     assert.match(bundle.headers['content-type'] as string, /javascript/);
-    assert.doesNotMatch(bundle.body, /Coral|synthetic-v1-1/);
-    assert.equal((await app.inject('/server/domain/game.ts')).statusCode, 404);
+    assert.doesNotMatch(bundle.body, /synthetic-v1-1|\/api\/scenarios/);
+    assert.equal((await app.inject('/server/domain/removed.ts')).statusCode, 404);
     assert.equal((await app.inject('/.env')).statusCode, 404);
     assert.equal((await app.inject('/api/missing')).statusCode, 404);
-    const session = await app.inject({
-      method: 'POST',
-      url: '/api/sessions',
-      payload: {},
-      headers: { host: 'arena.example', origin: 'https://arena.example' },
-    });
-    assert.equal(session.statusCode, 200);
-    assert.match(session.headers['set-cookie'] as string, /Secure/);
+    const daily = await app.inject('/api/daily-five/today');
+    assert.equal(daily.statusCode, 200);
+    assert.equal(daily.json().rounds.length, 5);
   },
 );

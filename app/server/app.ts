@@ -26,28 +26,11 @@ import {
   readDailyFiveSnapshot,
   writeDailyFiveSnapshot,
 } from './domain/daily-five/index.js';
-import { HuntService } from './services/hunt-service.js';
-import { ProgressionService } from './domain/progression/index.js';
-import { syncProgression } from './services/progression-feed.js';
 import { registerDailyFiveRoutes } from './routes/daily-five.js';
-import { registerHuntRoutes } from './routes/hunt.js';
-import { registerHuntV2Routes } from './routes/hunt-v2.js';
-import { HuntV2Service } from './services/hunt-v2.js';
-import { registerMatchmakingRoutes } from './matchmaking/routes.js';
-import { registerProgressionRoutes } from './routes/progression.js';
-import { dailySettlementSources, registerDailySettlementSources } from './db/daily.js';
-import { DailyGame, type DailyChallenge } from './domain/daily.js';
-import { Game, GameError } from './domain/game.js';
-import {
-  collectLiveScenario,
-  discoverLiveProviderAssets,
-  type LiveProviderAsset,
-} from './domain/live.js';
-import { createLiveHuntBoardFactory } from './domain/hunt/live-board.js';
+import { discoverLiveProviderAssets, type LiveProviderAsset } from './domain/live.js';
 import { createNansenClient, type AttemptEvent } from './nansen/client.js';
 import { configuredNansenApiKey, configuredNansenCreditBudget } from './nansen/config.js';
 import { providerStatus } from './nansen/status.js';
-import { COSTS, START_CASH } from './domain/scoring.js';
 import { SCENARIOS, type SyntheticScenario } from '../fixtures/synthetic/scenarios.js';
 import { DAILY_FIVE_V2_RULES, type DailyFiveV2Rules } from '../shared/game-rules.js';
 
@@ -59,7 +42,6 @@ export interface AppOptions {
   rateLimitMax?: number;
   dataMode?: 'synthetic' | 'live';
 }
-const COOKIE = 'whale_session';
 const AUTH_COOKIE = 'daily5_user';
 const DAY = 86_400_000;
 const DAILY_FIVE_PROVIDER_COHORT = 'nansen-historical-daily-v3-whale-pools';
@@ -101,7 +83,7 @@ function dailyFiveProviderScenario(
     sourceUrl: 'https://nansen.ai',
     title: 'The daily signal',
     subtitle:
-      'Twenty-five real provider assets in five fresh pools, with one whale signal hidden in each pool.',
+      'Twenty-five real provider assets in five fresh pools, with one wallet signal hidden in each pool.',
     cutoff: observedAt,
     assets: assets.map((asset, index) => ({
       ...templates[index % templates.length]!,
@@ -125,7 +107,7 @@ export async function buildApp(options: AppOptions = {}) {
   const app = Fastify({ logger: options.logger ?? false, bodyLimit: 16_384 });
   const production = options.production ?? process.env.NODE_ENV === 'production';
   const db = openDatabase(
-    options.databasePath ?? process.env.DATABASE_PATH ?? './data/whale-arena.sqlite',
+    options.databasePath ?? process.env.DATABASE_PATH ?? './data/daily5.sqlite',
   );
   ensureDemoUser(db);
   const requestedMode =
@@ -188,9 +170,6 @@ export async function buildApp(options: AppOptions = {}) {
       return 'Nansen rejected the configured API key or its endpoint permissions. Provide a valid key with access to the required provider endpoints; synthetic data remains disabled in live mode.';
     return 'Nansen live data could not be collected safely. Daily Five requires provider data; synthetic data is available only in explicit practice mode.';
   };
-  let scenarios: SyntheticScenario[] = SCENARIOS;
-  let liveScenario: SyntheticScenario | null = null;
-  const liveHuntEnabled = process.env.NANSEN_LIVE_HUNT === 'true';
   let historicalDailyPack = savedHistoricalDailyPack ?? localSavedProviderPack;
   let historicalFailure: string | null = null;
 
@@ -231,37 +210,12 @@ export async function buildApp(options: AppOptions = {}) {
           : `Nansen historical coverage is incomplete (${historicalFailure}). No synthetic data is published as Daily Five.`;
     }
   }
-  if (requestedMode === 'live' && liveHuntEnabled && apiKey) {
-    try {
-      const live = await collectLiveScenario(nansen ?? createProviderClient()!);
-      scenarios = [live];
-      liveScenario = live;
-    } catch {
-      if (!historicalDailyPack) liveReason = providerFailureReason();
-    }
-  }
   let practicePool =
     historicalDailyPack ??
     createSyntheticDailyFiveCasePack(
       `practice-pool-${new Date(currentDayStart).toISOString().slice(0, 10)}`,
       currentDayStart,
       DAILY_FIVE_V2_RULES,
-    );
-  const game = new Game(db, scenarios);
-  const daily = new DailyGame(db);
-  const dailyChallenge = ensureDailyChallenge(daily, scenarios[0]!);
-  if (dailySettlementSources(db, dailyChallenge.id).length === 0)
-    registerDailySettlementSources(
-      db,
-      dailyChallenge.id,
-      scenarios[0]!.assets.map((asset) => ({
-        assetId: asset.id,
-        kind: asset.providerChain && asset.providerTokenAddress ? ('nansen' as const) : 'synthetic',
-        chain: asset.providerChain ?? null,
-        tokenAddress: asset.providerTokenAddress ?? null,
-        entryPrice: asset.entry,
-        fallbackExitPrice: asset.exit,
-      })),
     );
   await app.register(cookie);
   await app.register(rateLimit, { max: options.rateLimitMax ?? 240, timeWindow: '1 minute' });
@@ -291,7 +245,11 @@ export async function buildApp(options: AppOptions = {}) {
         allowed.add('http://localhost:8311');
       }
       if (!allowed.has(origin))
-        throw new GameError('This request came from an unrecognized origin.', 403);
+        throw new DailyFiveError(
+          'FORBIDDEN',
+          'This request came from an unrecognized origin.',
+          403,
+        );
     }
   });
   app.setErrorHandler((error, _request, reply) => {
@@ -300,14 +258,14 @@ export async function buildApp(options: AppOptions = {}) {
         .code(400)
         .send({ message: 'Invalid request. Check the selected token, card, or allocation.' });
     const status =
-      error instanceof GameError
+      error instanceof DailyFiveError
         ? error.statusCode
         : ((error as { statusCode?: number }).statusCode ?? 500);
     if (status >= 500) app.log.error(error);
     return reply.code(status).send({
       message:
         status >= 500
-          ? 'The arena hit a snag. Your locked choices are safe; please retry.'
+          ? 'Daily5 hit a snag. Your locked choices are safe; please retry.'
           : error instanceof Error
             ? error.message
             : 'Invalid request.',
@@ -332,7 +290,7 @@ export async function buildApp(options: AppOptions = {}) {
     return authenticatedAuthUser(request).id;
   }
   function dailyFivePlayer(request: FastifyRequest): string | undefined {
-    return userByAuthSession(db, request.cookies[AUTH_COOKIE])?.id ?? request.cookies[COOKIE];
+    return userByAuthSession(db, request.cookies[AUTH_COOKIE])?.id;
   }
   function setAuthCookie(reply: { setCookie: FastifyReply['setCookie'] }, userId: string): void {
     reply.setCookie(AUTH_COOKIE, createAuthSession(db, userId), {
@@ -373,12 +331,6 @@ export async function buildApp(options: AppOptions = {}) {
     reply.clearCookie(AUTH_COOKIE, { path: '/' });
     return { ok: true };
   });
-  function sessionId(request: FastifyRequest): string {
-    const id = request.cookies[COOKIE];
-    if (!id) throw new GameError('Start a session to enter the arena.', 401);
-    game.session(id);
-    return id;
-  }
   const providerIdentityForKey = (key: string) => {
     const normalized = key.toLowerCase();
     const candidate = historicalDailyPack?.privateRounds
@@ -482,20 +434,6 @@ export async function buildApp(options: AppOptions = {}) {
     if (request.url.startsWith('/api/daily-five') || request.url.startsWith('/api/practice'))
       await ensureCurrentLivePack();
   });
-  const hunt = new HuntService(db);
-  const huntV2 = new HuntV2Service(db, {
-    boardFactory: liveScenario ? createLiveHuntBoardFactory(liveScenario) : undefined,
-  });
-  app.addHook('onClose', async () => {
-    hunt.dispose();
-    huntV2.dispose();
-  });
-  const progression = new ProgressionService(db);
-  syncProgression(db, progression);
-  app.addHook('onSend', async (request, reply, payload) => {
-    if (request.url.startsWith('/api/') && reply.statusCode < 400) syncProgression(db, progression);
-    return payload;
-  });
   await registerDailyFiveRoutes(app, {
     getEngine: () => dailyFive,
     cookieName: AUTH_COOKIE,
@@ -515,117 +453,15 @@ export async function buildApp(options: AppOptions = {}) {
     cookieName: AUTH_COOKIE,
     playerId: dailyFivePlayer,
   });
-  await registerHuntRoutes(app, {
-    engine: hunt,
-    playerId: sessionId,
-    replaySummary: (id, actor) => hunt.replaySummary(id, actor),
-  });
-  await registerHuntV2Routes(app, { service: huntV2, playerId: sessionId });
-  await registerMatchmakingRoutes(app, { engine: hunt, playerId: sessionId });
-  await registerProgressionRoutes(app, { service: progression, playerId: sessionId });
-  const sessionSchema = z.object({}).strict();
-  const scenarioParams = z.object({ id: z.string().max(80) });
-  app.post('/api/sessions', async (request, reply) => {
-    sessionSchema.parse(request.body ?? {});
-    const existing = request.cookies[COOKIE];
-    if (existing) {
-      try {
-        return game.session(existing);
-      } catch (error) {
-        if (!(error instanceof GameError) || error.statusCode !== 401) throw error;
-      }
-    }
-    const session = game.createSession();
-    reply.setCookie(COOKIE, session.id, {
-      httpOnly: true,
-      sameSite: 'lax',
-      secure: production,
-      path: '/',
-      maxAge: 60 * 60 * 24 * 30,
-    });
-    return session;
-  });
-  app.post('/api/sessions/reset', async (request, reply) => {
-    sessionSchema.parse(request.body ?? {});
-    const session = game.createSession();
-    reply.setCookie(COOKIE, session.id, {
-      httpOnly: true,
-      sameSite: 'lax',
-      secure: production,
-      path: '/',
-      maxAge: 60 * 60 * 24 * 30,
-    });
-    return session;
-  });
-  app.get('/api/session', async (request) => game.session(sessionId(request)));
-  app.get('/api/scenarios/next', async (request) => game.next(sessionId(request)));
-  app.post('/api/scenarios/:id/unlock', async (request) => {
-    const { id } = scenarioParams.parse(request.params);
-    const { assetId, kind } = z
-      .object({ assetId: z.enum(['a', 'b', 'c']), kind: z.enum(['flow', 'buyers', 'pulse']) })
-      .strict()
-      .parse(request.body);
-    return game.unlock(sessionId(request), id, assetId, kind);
-  });
-  app.post('/api/scenarios/:id/choice', async (request) => {
-    const { id } = scenarioParams.parse(request.params);
-    const { weights } = z.object({ weights: z.unknown() }).strict().parse(request.body);
-    return game.choose(sessionId(request), id, weights);
-  });
-  app.get('/api/scenarios/:id/result', async (request) =>
-    game.result(sessionId(request), scenarioParams.parse(request.params).id),
-  );
-  app.post('/api/scenarios/:id/continue', async (request) => {
-    sessionSchema.parse(request.body ?? {});
-    return game.advance(sessionId(request), scenarioParams.parse(request.params).id);
-  });
-  app.get('/api/leaderboard', async (request) => ({
-    entries: game.leaderboard(sessionId(request)),
-  }));
-  app.get('/api/challenges/today', async () => ({
-    available: liveAvailable,
-    mode: liveAvailable ? 'live' : requestedMode === 'live' ? 'unavailable' : 'synthetic',
-    observedAt: liveAvailable ? scenarios[0]?.cutoff : undefined,
-    reason: liveReason,
-    sourceLabel: liveAvailable ? scenarios[0]?.sourceLabel : undefined,
-    sourceUrl: liveAvailable ? scenarios[0]?.sourceUrl : undefined,
-    daily: dailySummary(daily, dailyChallenge),
-  }));
-  app.get('/api/daily/today', async () => dailySummary(daily, dailyChallenge));
-  app.post('/api/daily/today/entry', async (request) => {
-    const { weights } = z.object({ weights: z.unknown() }).strict().parse(request.body);
-    try {
-      return daily.enter(sessionId(request), dailyChallenge.id, weights);
-    } catch (error) {
-      if (error instanceof GameError) throw error;
-      throw new GameError(
-        error instanceof Error ? error.message : 'Daily entry was rejected.',
-        error instanceof Error &&
-          (error.message.includes('outside') || error.message.includes('already locked'))
-          ? 409
-          : 400,
-      );
-    }
-  });
-  app.get('/api/daily/today/result', async (request) => {
-    try {
-      return daily.result(sessionId(request), dailyChallenge.id);
-    } catch (error) {
-      if (error instanceof GameError) throw error;
-      if (error instanceof Error && error.message.includes('No official entry'))
-        return { status: 'none', challengeId: dailyChallenge.id };
-      throw new GameError(error instanceof Error ? error.message : 'Daily entry not found.', 404);
-    }
-  });
   app.get('/healthz', async () => ({
     status: 'ok',
     mode: liveAvailable ? 'live' : requestedMode === 'live' ? 'unavailable' : 'synthetic',
     provider: liveAvailable ? 'nansen' : requestedMode === 'live' ? 'unavailable' : 'disabled',
     scenarioVersion: liveAvailable
-      ? 'nansen-live-v1'
+      ? 'nansen-daily-five-v1'
       : requestedMode === 'live'
         ? 'provider-unavailable'
-        : 'synthetic-v1',
+        : 'synthetic-daily-five-v1',
     liveAvailable,
   }));
   app.get('/api/admin/usage', async (request, reply) => {
@@ -635,7 +471,7 @@ export async function buildApp(options: AppOptions = {}) {
     )
       return reply.code(401).send({ message: 'Administrator authentication required.' });
     return {
-      projectId: 'whale-arena',
+      projectId: 'daily5',
       mode: liveAvailable ? 'live' : requestedMode === 'live' ? 'unavailable' : 'synthetic',
       ...nansen?.usage(),
       attempts: nansen?.usage().attempts ?? 0,
@@ -657,77 +493,4 @@ export async function buildApp(options: AppOptions = {}) {
     );
   }
   return app;
-}
-
-const DAILY_DAY = 86_400_000;
-
-function dailySummary(daily: DailyGame, challenge: DailyChallenge) {
-  const status = daily.status(challenge.id);
-  const now = Date.now();
-  const opens = Date.parse(challenge.opensAt);
-  const locks = Date.parse(challenge.locksAt);
-  return {
-    id: challenge.id,
-    available: status === 'pending' && now >= opens && now < locks,
-    status,
-    mode:
-      challenge.evidence &&
-      typeof challenge.evidence === 'object' &&
-      !Array.isArray(challenge.evidence)
-        ? ((challenge.evidence as { mode?: string }).mode ?? 'synthetic')
-        : 'synthetic',
-    opensAt: challenge.opensAt,
-    locksAt: challenge.locksAt,
-    entryAt: challenge.entryAt,
-    settleAt: challenge.settleAt,
-    voidAt: challenge.voidAt,
-    challenge,
-  };
-}
-
-function ensureDailyChallenge(daily: DailyGame, scenario: SyntheticScenario): DailyChallenge {
-  const now = new Date();
-  let dayStart = Date.UTC(now.getUTCFullYear(), now.getUTCMonth(), now.getUTCDate());
-  if (now.getTime() >= dayStart + DAILY_DAY) dayStart += DAILY_DAY;
-  const id = `daily-${new Date(dayStart).toISOString().slice(0, 10)}`;
-  try {
-    return daily.challenge(id);
-  } catch (error) {
-    if (!(error instanceof Error) || !error.message.includes('not found')) throw error;
-  }
-  const opensAt = new Date(dayStart).toISOString();
-  const locksAt = new Date(dayStart + DAILY_DAY).toISOString();
-  const challenge: DailyChallenge = {
-    id,
-    version: 'daily-v1',
-    evidenceVersion: 'daily-evidence-v1',
-    assetIds: scenario.assets.map((asset) => asset.id) as [string, string, string],
-    evidence: {
-      mode: scenario.mode ?? 'synthetic',
-      sourceLabel: scenario.sourceLabel ?? 'Synthetic fixture',
-      sourceUrl: scenario.sourceUrl ?? '',
-      observedAt: scenario.cutoff,
-      title: scenario.title,
-      subtitle: scenario.subtitle,
-      assets: scenario.assets.map((asset) => ({
-        id: asset.id,
-        alias: asset.alias,
-        category: asset.category,
-        series: asset.series,
-        clues: asset.clues,
-      })),
-    } as unknown as DailyChallenge['evidence'],
-    rules: {
-      version: COSTS.version,
-      startCash: START_CASH,
-      entryCostBps: COSTS.entry * 10_000,
-      exitCostBps: COSTS.exit * 10_000,
-    },
-    opensAt,
-    locksAt,
-    entryAt: locksAt,
-    settleAt: new Date(dayStart + DAILY_DAY * 2).toISOString(),
-    voidAt: new Date(dayStart + DAILY_DAY * 3).toISOString(),
-  };
-  return daily.publish(challenge);
 }

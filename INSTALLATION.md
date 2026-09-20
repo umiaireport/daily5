@@ -1,4 +1,4 @@
-# Daily5 installation and setup
+# Daily5 installation
 
 ## Requirements
 
@@ -6,7 +6,7 @@
 - A modern browser
 - A Nansen API account and server-side key only when live provider data is needed
 
-The local app uses Node 24’s built-in SQLite fallback. `DATABASE_URL` is documented as a future durable database target; the current local adapter uses `DATABASE_PATH`.
+The local app uses Node 24’s built-in SQLite database. `DATABASE_PATH` controls where the local database is stored.
 
 ## Install
 

@@ -10,7 +10,7 @@ if (existsSync('../../.env')) loadEnvFile('../../.env');
 if (process.env.NODE_ENV === 'production')
   throw new Error('reset:daily-five is development-only and refuses NODE_ENV=production.');
 
-const databasePath = process.env.DATABASE_PATH ?? './data/whale-arena.sqlite';
+const databasePath = process.env.DATABASE_PATH ?? './data/daily5.sqlite';
 const db = openDatabase(databasePath);
 try {
   const counts = resetDailyFiveState(db);

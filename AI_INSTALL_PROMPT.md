@@ -1,13 +1,13 @@
-# AI installation prompt
+# Daily5 setup prompt
 
-Copy the prompt below into an AI coding agent with terminal access when setting up a fresh checkout.
+Copy the prompt below into an AI coding agent with terminal access when setting up a fresh Daily5 checkout.
 
 ```text
 You are the local installation and verification agent for Daily5.
 
 Work from the repository root, then use app/ as the project directory. Read README.md, INSTALLATION.md, app/package.json, and app/.env.example before changing anything.
 
-The goal is to install and verify the local Daily5 app. Do not deploy it, change hosting settings, push Git commits, create commits, or create backup/artifact files.
+The goal is to install and verify the local Daily5 app. Do not change application code or create backup/artifact files during setup.
 
 Requirements:
 - Node.js 24.x and npm.

@@ -8,7 +8,6 @@ import type {
   UnopenedClueDescriptor,
 } from '../../shared/evidence.js';
 import type { DailyTicketResult } from '../../shared/daily-five.js';
-import type { HuntParticipantView } from '../../shared/hunt.js';
 import {
   categoryIcon,
   classNames,
@@ -762,112 +761,6 @@ export function RoundProgress({
       </span>
     </nav>
   );
-}
-
-export interface EvidencePinProps extends UiNamespaceProps {
-  evidence: RevealedClue;
-  pinned?: boolean;
-  onToggle?: () => void;
-  state?: GameUiState;
-}
-
-export function EvidencePin({
-  evidence,
-  pinned = false,
-  onToggle,
-  state = 'default',
-  namespace = 'whale-hunt',
-  className,
-}: EvidencePinProps) {
-  return (
-    <button
-      type="button"
-      className={uiRoot(
-        namespace,
-        classNames('game-ui__evidence-pin', stateClass(state), pinned && 'is-pinned', className),
-      )}
-      aria-pressed={pinned}
-      disabled={!onToggle || state === 'loading' || state === 'unavailable'}
-      onClick={onToggle}
-    >
-      <span className="game-ui__pin-mark">
-        <GameIcon name="pin" size={17} />
-      </span>
-      <span>
-        <strong>{EVIDENCE_CATEGORY_LABELS[evidence.category]}</strong>
-        <small>{pinned ? 'Pinned for the team' : 'Pin for the evidence board'}</small>
-      </span>
-      <span className="game-ui__pin-status">{pinned ? 'Pinned' : 'Pin'}</span>
-    </button>
-  );
-}
-
-export interface PlayerSeatProps extends UiNamespaceProps {
-  participant: HuntParticipantView;
-  active?: boolean;
-  selected?: boolean;
-  onSelect?: () => void;
-  state?: GameUiState;
-}
-
-function connectionLabel(connection: HuntParticipantView['connection']): string {
-  if (connection === 'connected') return 'Connected';
-  if (connection === 'reconnecting') return 'Reconnecting';
-  if (connection === 'substituted') return 'Substituted';
-  return 'Disconnected';
-}
-
-export function PlayerSeat({
-  participant,
-  active = false,
-  selected = false,
-  onSelect,
-  state = 'default',
-  namespace = 'whale-hunt',
-  className,
-}: PlayerSeatProps) {
-  const content = (
-    <>
-      <span className="game-ui__seat-avatar">
-        <GameIcon name={participant.role === 'whale' ? 'whale' : 'user'} size={18} />
-      </span>
-      <span className="game-ui__seat-copy">
-        <strong>{participant.displayName}</strong>
-        <small>
-          {participant.isCaptain ? 'Captain · ' : ''}
-          {participant.role === 'whale' ? 'Whale' : 'Tracer'}
-          {participant.kind === 'computer' ? ` · ${participant.computerLabel}` : ''}
-        </small>
-      </span>
-      <span className={classNames('game-ui__connection', `is-${participant.connection}`)}>
-        <i aria-hidden="true" />
-        {connectionLabel(participant.connection)}
-      </span>
-    </>
-  );
-  const classNameValue = uiRoot(
-    namespace,
-    classNames(
-      'game-ui__player-seat',
-      stateClass(state),
-      active && 'is-active',
-      selected && 'is-selected',
-      className,
-    ),
-  );
-  if (onSelect)
-    return (
-      <button
-        type="button"
-        className={classNameValue}
-        aria-pressed={selected}
-        onClick={onSelect}
-        disabled={state === 'locked' || state === 'unavailable'}
-      >
-        {content}
-      </button>
-    );
-  return <div className={classNameValue}>{content}</div>;
 }
 
 export interface SourceLabelProps extends UiNamespaceProps {

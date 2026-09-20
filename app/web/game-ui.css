@@ -736,111 +736,6 @@
   font-size: 0.65rem;
 }
 
-.game-ui__evidence-pin,
-.game-ui__player-seat {
-  align-items: center;
-  background: var(--game-ui-panel);
-  border: 1px solid var(--game-ui-border);
-  border-radius: 0.65rem;
-  color: var(--game-ui-text);
-  display: flex;
-  gap: 0.65rem;
-  min-height: 3.7rem;
-  padding: 0.6rem 0.75rem;
-  text-align: left;
-  width: 100%;
-}
-
-.game-ui__evidence-pin:not(:disabled):hover,
-.game-ui__evidence-pin.is-pinned,
-.game-ui__player-seat.is-active,
-.game-ui__player-seat.is-selected {
-  background: color-mix(in srgb, var(--game-ui-accent) 8%, var(--game-ui-panel));
-  border-color: color-mix(in srgb, var(--game-ui-accent) 58%, var(--game-ui-border));
-}
-
-.game-ui__pin-mark,
-.game-ui__seat-avatar {
-  align-items: center;
-  background: #0d151d;
-  border: 1px solid var(--game-ui-border-strong);
-  border-radius: 50%;
-  color: var(--game-ui-accent);
-  display: flex;
-  flex: 0 0 2.3rem;
-  height: 2.3rem;
-  justify-content: center;
-  width: 2.3rem;
-}
-
-.game-ui__evidence-pin > span:nth-child(2),
-.game-ui__seat-copy {
-  display: grid;
-  gap: 0.18rem;
-  min-width: 0;
-}
-
-.game-ui__evidence-pin strong,
-.game-ui__seat-copy strong {
-  font-size: 0.8rem;
-  font-weight: 650;
-}
-
-.game-ui__evidence-pin small,
-.game-ui__seat-copy small {
-  color: var(--game-ui-muted);
-  font-size: 0.67rem;
-}
-
-.game-ui__pin-status {
-  color: var(--game-ui-muted);
-  font-size: 0.67rem;
-  margin-left: auto;
-  white-space: nowrap;
-}
-
-.game-ui__evidence-pin.is-pinned .game-ui__pin-status {
-  color: var(--game-ui-accent);
-}
-
-.game-ui__player-seat {
-  cursor: default;
-}
-
-button.game-ui__player-seat {
-  cursor: pointer;
-}
-
-.game-ui__connection {
-  align-items: center;
-  color: var(--game-ui-muted);
-  display: inline-flex;
-  font-size: 0.62rem;
-  gap: 0.3rem;
-  margin-left: auto;
-  white-space: nowrap;
-}
-
-.game-ui__connection i {
-  background: var(--game-ui-subtle);
-  border-radius: 50%;
-  height: 0.4rem;
-  width: 0.4rem;
-}
-
-.game-ui__connection.is-connected i {
-  background: var(--game-ui-accent);
-}
-
-.game-ui__connection.is-reconnecting i {
-  background: var(--game-ui-amber);
-}
-
-.game-ui__connection.is-disconnected i,
-.game-ui__connection.is-substituted i {
-  background: var(--game-ui-loss);
-}
-
 .game-ui__source-label {
   align-items: center;
   background: color-mix(in srgb, var(--game-ui-panel) 88%, transparent);
@@ -942,11 +837,6 @@ button.game-ui__player-seat {
 
 .daily-five .game-ui__asset-card {
   --game-ui-accent: var(--asset-accent);
-}
-
-.whale-hunt .game-ui__player-seat,
-.whale-hunt .game-ui__evidence-pin {
-  --game-ui-accent: var(--game-ui-cyan);
 }
 
 @media (max-width: 640px) {

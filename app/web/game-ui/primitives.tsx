@@ -4,7 +4,7 @@ import type { EvidenceCategory } from '../../shared/evidence.js';
 export type GameUiState =
   'default' | 'loading' | 'empty' | 'unavailable' | 'selected' | 'locked' | 'revealed';
 
-export type GameUiNamespace = 'daily-five' | 'whale-hunt';
+export type GameUiNamespace = 'daily-five';
 
 export interface UiNamespaceProps {
   namespace?: GameUiNamespace;
@@ -224,45 +224,6 @@ export function GameIcon({
       {label && <title>{label}</title>}
       {ICON_PATHS[name]}
     </svg>
-  );
-}
-
-export function WhaleSilhouette({
-  label = 'Whale Arena',
-  className,
-}: {
-  label?: string;
-  className?: string;
-}) {
-  return (
-    <svg className={className} viewBox="0 0 64 40" fill="none" role="img" aria-label={label}>
-      <path
-        d="M5 19c8-1 12-9 25-9 11 0 17 6 19 13 4-2 7-5 11-5-1 6-4 9-8 11C35 43 8 34 5 19Z"
-        fill="currentColor"
-      />
-      <path
-        d="M31 11c-4-7-1-10 0-10 3 2 4 5 4 9M37 10c1-5 4-6 6-5-1 4-3 6-6 7"
-        stroke="currentColor"
-        strokeWidth="2"
-      />
-      <circle cx="15" cy="20" r="2" fill="var(--game-ui-background, #0b1016)" />
-      <path
-        d="M25 27c3 4 7 5 10 5"
-        stroke="var(--game-ui-background, #0b1016)"
-        strokeWidth="2"
-        strokeLinecap="round"
-      />
-    </svg>
-  );
-}
-
-export function SonarMark({ className }: { className?: string }) {
-  return (
-    <span className={classNames('game-ui__sonar', className)} aria-hidden="true">
-      <span />
-      <span />
-      <i />
-    </span>
   );
 }
 

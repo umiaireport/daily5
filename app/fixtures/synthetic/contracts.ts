@@ -1,7 +1,6 @@
 import type { EvidenceCategory, PublicAssetEvidence, RevealedClue } from '../../shared/evidence.js';
 import {
   DAILY_FIVE_RULES,
-  HUNT_RULES,
   money,
   price,
   type Money,
@@ -15,19 +14,6 @@ import type {
   DailyTicketResult,
   SubmitDailyDecisionCommand,
 } from '../../shared/daily-five.js';
-import type {
-  FinalAccusationCommand,
-  FinishInvestigationCommand,
-  HuntPhase,
-  HuntReveal,
-  HuntTracerView,
-  HuntWhaleView,
-  PinEvidenceCommand,
-  PurchaseScanCommand,
-  SelectHuntTargetsCommand,
-  SubmitSuspicionCommand,
-  SubmitWhalePlanCommand,
-} from '../../shared/hunt.js';
 
 const CATEGORIES: readonly EvidenceCategory[] = [
   'flow',
@@ -229,166 +215,6 @@ export const SYNTHETIC_REFRESH_RECOVERY = {
   beforeRefresh: { phase: 'saved-result' as const, stateVersion: 2 },
   afterRefresh: { phase: 'saved-result' as const, stateVersion: 2 },
   requiredAction: 'continue' as const,
-};
-
-const baseHunt = {
-  matchId: id('hunt-match-1'),
-  roomCode: 'SYNTH1',
-  stateVersion: 4,
-  roundIndex: 1,
-  totalRounds: HUNT_RULES.totalRounds,
-  assets: [
-    ...SYNTHETIC_DAILY_FIVE.rounds[0]!.candidates,
-    {
-      ...SYNTHETIC_DAILY_FIVE.rounds[0]!.candidates[0]!,
-      assetId: id('hunt-1-5'),
-      attemptAlias: 'Mystery F',
-      colorIndex: 5,
-    },
-  ],
-  participants: [
-    {
-      participantId: id('whale-player'),
-      displayName: 'Current Keeper',
-      role: 'whale' as const,
-      kind: 'human' as const,
-      connection: 'connected' as const,
-      isCaptain: false,
-    },
-    {
-      participantId: id('tracer-player'),
-      displayName: 'Tide Watch',
-      role: 'tracer' as const,
-      kind: 'computer' as const,
-      computerLabel: 'Computer' as const,
-      connection: 'connected' as const,
-      isCaptain: true,
-    },
-  ],
-  captain: {
-    participantId: id('tracer-player'),
-    transfer: 'stable' as const,
-    canSubmitFinalAccusation: true,
-  },
-  deadline: { phase: 'tracer-investigation' as const, at: '2026-09-17T18:00:00Z' },
-  reconnect: {
-    reconnectUntil: '2026-09-17T18:05:00Z',
-    canReconnect: true,
-    substitution: 'none' as const,
-  },
-  evidence: { status: 'available' as const, sourceKind: 'synthetic' as const },
-};
-
-export const SYNTHETIC_HUNT_WHALE_VIEW: HuntWhaleView = {
-  ...baseHunt,
-  phase: 'whale-planning',
-  viewerRole: 'whale',
-  ownTargets: { primaryAssetId: id('daily-1-0'), secondaryAssetId: id('daily-1-1') },
-  unitsPurchased: 4,
-  decoyUnits: 1,
-};
-
-export const SYNTHETIC_HUNT_TRACER_VIEW: HuntTracerView = {
-  ...baseHunt,
-  phase: 'tracer-investigation',
-  viewerRole: 'tracer',
-  scansRemaining: 2,
-  sharedEvidence: [],
-  pinnedEvidenceIds: [],
-  ownSuspicion: null,
-};
-
-export const SYNTHETIC_HUNT_COMPLETE_LIFECYCLE: readonly HuntPhase[] = [
-  'lobby',
-  'setup',
-  'whale-planning',
-  'tracer-investigation',
-  'round-complete',
-  'whale-planning',
-  'tracer-investigation',
-  'round-complete',
-  'whale-planning',
-  'tracer-investigation',
-  'round-complete',
-  'whale-planning',
-  'tracer-investigation',
-  'round-complete',
-  'whale-planning',
-  'tracer-investigation',
-  'round-complete',
-  'final-accusation',
-  'reveal',
-  'finished',
-] as const;
-
-export const SYNTHETIC_HUNT_COMMANDS: readonly [
-  SelectHuntTargetsCommand,
-  SubmitWhalePlanCommand,
-  PurchaseScanCommand,
-  PinEvidenceCommand,
-  SubmitSuspicionCommand,
-  FinishInvestigationCommand,
-  FinalAccusationCommand,
-] = [
-  {
-    kind: 'select-targets',
-    primaryAssetId: id('daily-1-0'),
-    secondaryAssetId: id('daily-1-1'),
-    expectedStateVersion: 1,
-    idempotencyKey: 'hunt-targets',
-  },
-  {
-    kind: 'submit-whale-plan',
-    roundIndex: 1,
-    action: 'drip',
-    assetId: id('daily-1-0'),
-    units: 4,
-    expectedStateVersion: 2,
-    idempotencyKey: 'hunt-plan-1',
-  },
-  {
-    kind: 'purchase-scan',
-    roundIndex: 1,
-    scanId: id('scan-flow-1'),
-    expectedStateVersion: 3,
-    idempotencyKey: 'hunt-scan-1',
-  },
-  {
-    kind: 'pin-evidence',
-    roundIndex: 1,
-    evidenceId: id('daily-clue-1-0-flow'),
-    expectedStateVersion: 4,
-    idempotencyKey: 'hunt-pin-1',
-  },
-  {
-    kind: 'submit-suspicion',
-    roundIndex: 1,
-    primaryAssetId: id('daily-1-0'),
-    secondaryAssetId: id('daily-1-1'),
-    expectedStateVersion: 5,
-    idempotencyKey: 'hunt-suspicion-1',
-  },
-  {
-    kind: 'finish-investigation',
-    roundIndex: 1,
-    expectedStateVersion: 6,
-    idempotencyKey: 'hunt-finish-1',
-  },
-  {
-    kind: 'final-accusation',
-    primaryAssetId: id('daily-1-0'),
-    secondaryAssetId: id('daily-1-1'),
-    expectedStateVersion: 20,
-    idempotencyKey: 'hunt-final',
-  },
-];
-
-export const SYNTHETIC_HUNT_REVEAL: HuntReveal = {
-  primaryAssetId: id('daily-1-0'),
-  secondaryAssetId: id('daily-1-1'),
-  accusation: { primaryAssetId: id('daily-1-0'), secondaryAssetId: id('daily-1-1') },
-  winner: 'tracers',
-  reason: 'targets-identified',
 };
 
 export const SYNTHETIC_REVEALED_CLUE: RevealedClue = {

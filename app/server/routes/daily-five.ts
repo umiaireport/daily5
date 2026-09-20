@@ -94,9 +94,8 @@ function sendError(error: unknown, reply: FastifyReply): unknown {
 
 function identity(request: FastifyRequest, options: DailyFiveRouteOptions): string {
   const playerId =
-    options.playerId?.(request) ?? request.cookies?.[options.cookieName ?? 'whale_session'];
-  if (!playerId)
-    throw new DailyFiveError('FORBIDDEN', 'Start a session before entering Daily Five.', 401);
+    options.playerId?.(request) ?? request.cookies?.[options.cookieName ?? 'daily5_user'];
+  if (!playerId) throw new DailyFiveError('FORBIDDEN', 'Log in before entering Daily5.', 401);
   return playerId;
 }
 
@@ -161,7 +160,7 @@ export async function registerDailyFiveRoutes(
       safely(reply, () =>
         engine(options).leaderboard(
           params(request).id,
-          options.playerId?.(request) ?? request.cookies?.[options.cookieName ?? 'whale_session'],
+          options.playerId?.(request) ?? request.cookies?.[options.cookieName ?? 'daily5_user'],
         ),
       ),
     );

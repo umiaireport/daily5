@@ -2,7 +2,6 @@ import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import {
   compileDailyCase,
-  compileHuntBoard,
   EvidenceValidationError,
   type DailyCaseCompileInput,
 } from '../server/evidence/index.js';
@@ -145,21 +144,4 @@ test('compiler rejects future clue candles and incomplete published coverage', (
     (error: unknown) =>
       error instanceof EvidenceValidationError && error.code === 'truncated-response',
   );
-});
-
-test('hunt board keeps six distinct real assets while exposing only public evidence', () => {
-  const cases = Array.from({ length: 6 }, (_, index) =>
-    compileDailyCase(
-      input({
-        caseId: `hunt-case-${index + 1}`,
-        roundIndex: index + 1,
-        tokenAddress: `0xhunt-${index + 1}`,
-      }),
-    ),
-  );
-  const board = compileHuntBoard({ boardId: 'hunt-fixture', cases });
-  assert.equal(board.assets.length, 6);
-  assert.equal(board.publicAssets.length, 6);
-  assert.equal(JSON.stringify(board.publicAssets).includes('0xhunt-1'), false);
-  assert.equal(JSON.stringify(board.publicAssets).includes('outcomeCandles'), false);
 });
