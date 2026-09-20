@@ -961,6 +961,7 @@
   background: var(--daily-panel);
   border: 1px solid var(--daily-border);
   border-radius: 0.75rem;
+  min-width: 0;
   padding: 1rem;
 }
 .daily-five-v2__portfolio {
@@ -1013,6 +1014,93 @@
 .daily-five-v2__clues .daily-five__clue {
   min-height: 6.2rem;
   text-align: left;
+}
+.daily-five-v2__clue-slots {
+  display: grid;
+  gap: 0.7rem;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  margin-top: 1rem;
+}
+.daily-five-v2__clue-slot {
+  align-content: start;
+  background: var(--daily-raised);
+  border: 1px solid var(--daily-border);
+  border-radius: 0.65rem;
+  color: var(--daily-text);
+  display: grid;
+  gap: 0.55rem;
+  min-height: 12rem;
+  min-width: 0;
+  padding: 0.8rem;
+  text-align: left;
+}
+.daily-five-v2__clue-slot.is-used {
+  cursor: pointer;
+}
+.daily-five-v2__clue-slot.is-used:hover,
+.daily-five-v2__clue-slot.is-selected {
+  background: #19362e;
+  border-color: var(--daily-accent);
+}
+.daily-five-v2__clue-slot.is-empty {
+  border-style: dashed;
+  color: var(--daily-muted);
+}
+.daily-five-v2__clue-slot-heading {
+  align-items: baseline;
+  display: flex;
+  gap: 0.5rem;
+  justify-content: space-between;
+}
+.daily-five-v2__clue-slot-heading > strong {
+  color: var(--daily-accent);
+  font-size: 0.72rem;
+  text-align: right;
+}
+.daily-five-v2__clue-slot-category {
+  color: var(--daily-accent);
+  font-size: 0.68rem;
+  font-weight: 700;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+}
+.daily-five-v2__clue-slot h3 {
+  font-size: 0.95rem;
+  line-height: 1.25;
+  margin: 0;
+}
+.daily-five-v2__clue-slot p {
+  color: var(--daily-muted);
+  font-size: 0.76rem;
+  line-height: 1.45;
+  margin: 0;
+}
+.daily-five-v2__clue-slot-metrics {
+  display: grid;
+  gap: 0.45rem;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+}
+.daily-five-v2__clue-slot-metrics > span {
+  display: grid;
+  gap: 0.15rem;
+  min-width: 0;
+}
+.daily-five-v2__clue-slot-metrics small,
+.daily-five-v2__clue-slot-footnote {
+  color: var(--daily-muted);
+  font-size: 0.65rem;
+}
+.daily-five-v2__clue-slot-metrics strong {
+  font-size: 0.82rem;
+  font-variant-numeric: tabular-nums;
+  overflow-wrap: anywhere;
+}
+.daily-five-v2__clue-slot-footnote {
+  margin-top: auto;
+}
+.daily-five-v2__clue-slot-empty {
+  align-self: center;
+  text-align: center;
 }
 .daily-five-v2__allocation-list {
   display: grid;
@@ -1171,6 +1259,9 @@
   .daily-five-v2__clues {
     grid-template-columns: repeat(2, minmax(0, 1fr));
   }
+  .daily-five-v2__clue-slots {
+    grid-template-columns: 1fr;
+  }
   .daily-five-v2__evidence-heading {
     align-items: start;
     display: grid;
@@ -1212,9 +1303,24 @@
   border-radius: 0.75rem;
   display: grid;
   gap: 1.1rem;
-  grid-template-columns: minmax(0, 2fr) repeat(2, minmax(0, 1fr));
+  grid-template-columns: minmax(0, 2fr) minmax(0, 1fr);
   min-width: 0;
   padding: 0;
+}
+.daily-five__portfolio-outcome-explanation {
+  grid-column: 1 / -1;
+}
+.daily-five__portfolio-outcome-evidence {
+  background: var(--daily-panel);
+  border: 1px solid var(--daily-border);
+  border-radius: 0.75rem;
+  min-width: 0;
+  margin-top: 1.1rem;
+  padding: 0.9rem;
+}
+.daily-five__portfolio-outcome-evidence h3 {
+  font-size: 1.05rem;
+  margin: 0.35rem 0 0.2rem;
 }
 .daily-five__portfolio-outcome-chart {
   background: var(--daily-panel);

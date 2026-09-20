@@ -158,10 +158,6 @@ function revealedAssetLabel(
   return symbol ? `${name} (${symbol})` : name;
 }
 
-function clueCategoryLabel(category: string): string {
-  return EVIDENCE_CATEGORY_LABELS[category as keyof typeof EVIDENCE_CATEGORY_LABELS] ?? category;
-}
-
 function revealAsset(attempt: DailyAttemptView): string {
   const result = attempt.savedResult?.result;
   const decision = result?.decision;
@@ -450,6 +446,9 @@ export function DailyFivePortfolioReveal({
   const result = saved.result;
   const contributions = result.contributions ?? [];
   const candidates = round?.candidates ?? [];
+  const openedClues = candidates.flatMap((asset) =>
+    asset.unlockedClues.map((clue) => ({ clue, assetLabel: asset.attemptAlias })),
+  );
   const walletExhausted = moneyNumber(result.endingEquity) <= 0;
   return (
     <section
@@ -520,15 +519,6 @@ export function DailyFivePortfolioReveal({
                   </dd>
                 </div>
               </dl>
-            </div>
-            <div className="daily-five__portfolio-outcome-copy daily-five__portfolio-outcome-explanation">
-              <span className="daily-five__eyebrow">WHY THIS RESULT</span>
-              <h3>No market risk was taken.</h3>
-              <p>{result.explanation}</p>
-              <p className="daily-five__muted">
-                Clues describe market evidence, but they do not matter to a cash allocation and do
-                not identify a whale wallet.
-              </p>
             </div>
           </article>
         ) : (
@@ -626,37 +616,28 @@ export function DailyFivePortfolioReveal({
                     </div>
                   </dl>
                 </div>
-                <div className="daily-five__portfolio-outcome-copy daily-five__portfolio-outcome-explanation">
-                  <span className="daily-five__eyebrow">WHY THIS RESULT</span>
-                  <h3>What the evidence could tell you</h3>
-                  <div className="daily-five__clue-readout">
-                    <span className="daily-five__eyebrow">WHAT THE CLUES SAID</span>
-                    {asset?.unlockedClues.length ? (
-                      <ul>
-                        {asset.unlockedClues.map((clue) => (
-                          <li key={clue.clueId}>
-                            <strong>{clueCategoryLabel(clue.category)}</strong>
-                            <span>{clue.factualHeadline}</span>
-                            <small>{clue.interpretation}</small>
-                          </li>
-                        ))}
-                      </ul>
-                    ) : (
-                      <p>No clues were opened for this asset before the lock.</p>
-                    )}
-                    <p className="daily-five__muted">
-                      A whale-footprint clue can flag concentrated or labeled activity, but no clue
-                      identifies a wallet or proves that this asset is the whale. The other clues
-                      are supporting context, not a guarantee of the outcome.
-                    </p>
-                  </div>
-                  <p>{result.explanation}</p>
-                </div>
               </article>
             );
           })
         )}
       </div>
+      <section className="daily-five__portfolio-outcome-evidence">
+        <span className="daily-five__eyebrow">WHY THIS RESULT</span>
+        <h3>
+          {contributions.length === 0
+            ? 'The opened clues did not require a market position.'
+            : 'What the opened clues could tell you'}
+        </h3>
+        <div className="daily-five__clue-readout">
+          <span className="daily-five__eyebrow">ALL OPENED CLUES · {openedClues.length}/3</span>
+          <ClueSlots clues={openedClues} />
+          <p className="daily-five__muted">
+            Each card is labeled with the asset whose clue was opened. The clue can describe a
+            different asset from the position shown above, and it is evidence—not a guarantee.
+          </p>
+        </div>
+        <p>{result.explanation}</p>
+      </section>
 
       <button
         type="button"
@@ -1950,6 +1931,97 @@ function MetricTile({ label, value }: { label: string; value: string }) {
       <small>{label}</small>
       <strong>{value}</strong>
     </div>
+  );
+}
+
+interface ResultClue {
+  readonly clue: RevealedClue;
+  readonly assetLabel: string;
+}
+
+function ClueSlots({ clues }: { clues: readonly ResultClue[] }) {
+  return (
+    <div className="daily-five-v2__clue-slots" aria-label="Clue results">
+      {Array.from({ length: 3 }, (_, index) => (
+        <ClueSlot
+          key={clues[index]?.clue.clueId ?? `empty-${index}`}
+          index={index + 1}
+          clue={clues[index]?.clue}
+          assetLabel={clues[index]?.assetLabel}
+          selected={false}
+        />
+      ))}
+    </div>
+  );
+}
+
+function ClueSlot({
+  index,
+  clue,
+  assetLabel,
+  selected,
+  onSelect,
+}: {
+  index: number;
+  clue?: RevealedClue;
+  assetLabel?: string;
+  selected: boolean;
+  onSelect?: () => void;
+}) {
+  const content = (
+    <>
+      <div className="daily-five-v2__clue-slot-heading">
+        <span className="daily-five__eyebrow">CLUE {index}</span>
+        <strong>
+          {clue ? (assetLabel ?? EVIDENCE_CATEGORY_LABELS[clue.category]) : 'NOT USED'}
+        </strong>
+      </div>
+      {clue ? (
+        <>
+          {assetLabel && (
+            <small className="daily-five-v2__clue-slot-category">
+              {EVIDENCE_CATEGORY_LABELS[clue.category]}
+            </small>
+          )}
+          <h3>{clue.factualHeadline}</h3>
+          <div className="daily-five-v2__clue-slot-metrics">
+            {clue.metrics.map((metric) => (
+              <span key={metric.label}>
+                <small>{metric.label}</small>
+                <strong>{metric.value}</strong>
+              </span>
+            ))}
+          </div>
+          <p>{clue.interpretation}</p>
+          <small className="daily-five-v2__clue-slot-footnote">
+            Evidence ends {new Date(clue.evidenceCutoff).toUTCString()}
+          </small>
+        </>
+      ) : (
+        <p className="daily-five-v2__clue-slot-empty">Not used this round.</p>
+      )}
+    </>
+  );
+
+  if (!clue || !onSelect)
+    return (
+      <article
+        className={`daily-five-v2__clue-slot ${clue ? 'is-used' : 'is-empty'} ${selected ? 'is-selected' : ''}`}
+      >
+        {content}
+      </article>
+    );
+
+  return (
+    <button
+      type="button"
+      className={`daily-five-v2__clue-slot is-used ${selected ? 'is-selected' : ''}`}
+      aria-pressed={selected}
+      aria-label={`Open clue ${index}: ${EVIDENCE_CATEGORY_LABELS[clue.category]}`}
+      onClick={onSelect}
+    >
+      {content}
+    </button>
   );
 }
 
