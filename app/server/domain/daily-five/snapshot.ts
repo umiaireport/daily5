@@ -10,9 +10,9 @@ export interface DailyFiveSnapshotIdentity {
 }
 
 /**
- * The demo pack is a derived, attribution-bearing snapshot rather than a raw
- * provider response. Keeping it on disk prevents every app restart from
- * spending another Nansen request.
+ * The saved pack is a derived, attribution-bearing snapshot rather than a raw
+ * provider response. Keeping the current UTC publication on disk makes
+ * same-day restarts consistent without another provider collection.
  */
 export function readDailyFiveSnapshot(
   filePath: string,
@@ -55,14 +55,6 @@ export function readDailyFiveSnapshot(
   } catch {
     return null;
   }
-}
-
-/** Reads the saved provider publication even when its historical day is not the current UTC day. */
-export function readLatestDailyFiveSnapshot(
-  filePath: string,
-  identities: readonly DailyFiveSnapshotIdentity[] = [],
-): DailyFiveCasePack | null {
-  return readDailyFiveSnapshot(filePath, undefined, identities);
 }
 
 export function writeDailyFiveSnapshot(filePath: string, pack: DailyFiveCasePack): void {

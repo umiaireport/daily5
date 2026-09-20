@@ -162,7 +162,7 @@ function candidateScore(row: TokenRow): number {
   return Math.log10(1 + liquidity) + Math.log10(1 + volume) + Math.log10(1 + netflow);
 }
 
-function normalizeCandidates(rows: TokenRow[]): TokenRow[] {
+function normalizeCandidates(rows: TokenRow[], limit = 5): TokenRow[] {
   const seen = new Set<string>();
   return rows
     .filter((row) => {
@@ -177,7 +177,46 @@ function normalizeCandidates(rows: TokenRow[]): TokenRow[] {
       return true;
     })
     .sort((a, b) => candidateScore(b) - candidateScore(a))
-    .slice(0, 5);
+    .slice(0, limit);
+}
+
+export interface LiveProviderAsset {
+  readonly symbol: string;
+  readonly name: string;
+  readonly chain: string;
+  readonly address: string;
+}
+
+/** Returns the current provider-ranked asset universe used to build the daily board. */
+export async function discoverLiveProviderAssets(
+  client: LiveNansenClient,
+): Promise<readonly LiveProviderAsset[]> {
+  const response = await client.request(
+    'liveCandidates',
+    {
+      chains: ['ethereum', 'solana', 'base', 'arbitrum', 'polygon'],
+      timeframe: '24h',
+      pagination: { page: 1, per_page: 100 },
+      filters: {},
+      order_by: [{ field: 'netflow', direction: 'DESC' }],
+    },
+    requestSchema,
+    screenerResponse,
+  );
+  const candidates = normalizeCandidates(response.data.data, 25);
+  if (candidates.length < 25)
+    throw new LiveCollectionError(
+      `Nansen returned ${candidates.length} usable assets; 25 are required for the daily board.`,
+    );
+  return candidates.map((candidate) => ({
+    symbol: compact(candidate.token_symbol, shortAddress(candidate.token_address)),
+    name: compact(
+      candidate.token_name ?? candidate.token_symbol,
+      shortAddress(candidate.token_address),
+    ),
+    chain: candidate.chain,
+    address: candidate.token_address,
+  }));
 }
 
 function makeAsset(

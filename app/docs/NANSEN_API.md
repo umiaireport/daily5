@@ -9,25 +9,26 @@ Set these values in `app/.env`:
 ```text
 DATA_MODE=live
 NANSEN_API=your-server-side-key
-NANSEN_CREDIT_BUDGET=10
 DAILY_FIVE_PROVIDER_SNAPSHOT=./data/daily-five-provider-demo.json
 ```
 
-`NANSEN_API2` and `NANSEN_API_KEY` remain supported as legacy aliases, but `NANSEN_API` takes precedence.
+`NANSEN_API` is the only provider key setting. The key stays on the server and is never sent to the browser.
+
+The app does not impose a default credit budget. If an operator wants a local request guard, they may set `NANSEN_CREDIT_BUDGET` to an integer; otherwise it remains unset.
 
 ## Provider pack
 
-Run the collector only when live data is authorized:
+In live mode, the app discovers the current provider-ranked asset universe and collects a new Daily Five pack when the current UTC day has no saved snapshot:
 
 ```text
-DATA_MODE=live DAILY_FIVE_DOWNLOAD=true npm run download:daily-five
+DATA_MODE=live npm run download:daily-five
 ```
 
-The collector saves the historical asset pack under `app/data/`. Normal startup reads that pack and does not make a new collection request. Practice selects from the saved pool; unavailable provider data is labelled synthetic rather than presented as live.
+The pack is saved under `app/data/` and reused for the remainder of that UTC day. On the next UTC day, live startup or the collector creates a new pack and writes the new same-day snapshot. Practice selects a fresh random one-round board from the available provider pool.
 
 ## Boundaries
 
-- Provider requests are server-side and credit-bounded.
+- Provider requests are server-side. An application request guard is available only when explicitly configured.
 - Stablecoins, invalid rows, incomplete coverage, and future observations are rejected.
 - Clues expose observed evidence before the player locks an allocation; later outcome fields remain private until reveal.
 - The app is a research game with virtual balances, not a trading or execution product.

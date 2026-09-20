@@ -20,19 +20,19 @@ For complete setup, live-data configuration, and verification commands, read [`I
 ## How the app works
 
 - Daily Five presents five mystery assets, charts, clues, allocation controls, and an immediate result after each round.
-- Practice uses the saved provider asset pack when available and labels synthetic data clearly when live data is not configured.
+- Practice selects a fresh one-round board from the available provider pool and labels synthetic data clearly when live data is not configured.
 - The virtual wallet compounds through five rounds; clues are factual observations, not trading advice.
 - Account history and official leaderboards are stored by the local app. Practice results do not enter official leaderboards.
 
 ## Nansen data
 
-Synthetic mode is the safe default. To collect provider-backed historical assets, put the server-side key in `app/.env`, set `DATA_MODE=live`, and run the one-time download from `app/`:
+Synthetic mode is the local default. To run the provider-backed app, put the server-side key in `app/.env` and set `DATA_MODE=live`:
 
 ```text
-DATA_MODE=live DAILY_FIVE_DOWNLOAD=true npm run download:daily-five
+DATA_MODE=live npm run dev
 ```
 
-The saved provider pack is reused on restart. Provider calls are bounded by `NANSEN_CREDIT_BUDGET`; never put a key in source code or a browser environment variable. See [`app/docs/NANSEN_API.md`](app/docs/NANSEN_API.md) for the data settings.
+The app creates the current Daily Five provider pack when that day has no saved snapshot, then refreshes it on the next UTC day. `npm run download:daily-five` can also trigger the current-day refresh explicitly. An optional `NANSEN_CREDIT_BUDGET` guard is available for operators who choose to configure one; it has no default. Never put a key in source code or a browser environment variable. See [`app/docs/NANSEN_API.md`](app/docs/NANSEN_API.md) for the data settings.
 
 ## Repository layout
 

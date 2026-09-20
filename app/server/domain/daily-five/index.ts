@@ -8,11 +8,7 @@ export {
   validateCasePack,
 } from './engine.js';
 export { createHistoricalDailyFiveCasePack } from './historical.js';
-export {
-  readDailyFiveSnapshot,
-  readLatestDailyFiveSnapshot,
-  writeDailyFiveSnapshot,
-} from './snapshot.js';
+export { readDailyFiveSnapshot, writeDailyFiveSnapshot } from './snapshot.js';
 export { createRandomPracticeCasePack } from './practice.js';
 export type {
   DailyFiveEngineOptions,

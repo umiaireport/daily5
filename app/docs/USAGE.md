@@ -12,6 +12,6 @@
 
 ## Data modes
 
-Synthetic mode is explicit and safe for development. Live mode uses the saved Nansen provider pack and shows provider attribution in the app. The app never places real trades.
+Synthetic mode is explicit and safe for development. Live mode collects the current Nansen provider pack, saves the same-day publication, and shows provider attribution in the app. The app never places real trades.
 
 Practice can be replayed and does not affect the official leaderboard. Daily Five is the official five-round challenge and keeps its saved result available after the day changes.

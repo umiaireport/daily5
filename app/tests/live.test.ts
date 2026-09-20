@@ -2,6 +2,7 @@ import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import {
   collectLiveScenario,
+  discoverLiveProviderAssets,
   LiveCollectionError,
   type LiveNansenClient,
 } from '../server/domain/live.ts';
@@ -163,4 +164,34 @@ test('live collection rejects a response with fewer than three usable assets', a
     collectLiveScenario(client, () => new Date('2026-09-17T08:00:00Z')),
     (error: unknown) => error instanceof LiveCollectionError,
   );
+});
+
+test('daily provider discovery returns a fresh 25-asset universe without stablecoins', async () => {
+  const client = {
+    async request() {
+      return {
+        cached: false,
+        data: {
+          data: [
+            row({ token_symbol: 'USDC', token_address: '0xstable' }),
+            ...Array.from({ length: 26 }, (_, index) =>
+              row({
+                token_symbol: `SIG${index}`,
+                token_name: `Signal ${index}`,
+                token_address: `0x${String(index + 1).padStart(40, '0')}`,
+                netflow: 100_000 + index,
+              }),
+            ),
+          ],
+        },
+      };
+    },
+  } as unknown as LiveNansenClient;
+  const assets = await discoverLiveProviderAssets(client);
+  assert.equal(assets.length, 25);
+  assert.equal(
+    assets.some((asset) => asset.symbol === 'USDC'),
+    false,
+  );
+  assert.equal(new Set(assets.map((asset) => `${asset.chain}:${asset.address}`)).size, 25);
 });

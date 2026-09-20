@@ -18,7 +18,7 @@ cp .env.example .env
 npm ci
 ```
 
-Keep `DATA_MODE=synthetic` for local development without provider credits. The checked-in provider pack is reused when the configured snapshot exists, so ordinary startup does not spend Nansen credits.
+Keep `DATA_MODE=synthetic` for local development without a provider key. In live mode, startup uses the current same-day provider snapshot when available and collects a new pack when the UTC day changes.
 
 ## Verify and run
 
@@ -47,12 +47,12 @@ DATA_MODE=live
 NANSEN_API=your-server-side-key
 ```
 
-Run the one-time collector only when live data is authorized and the account has credits:
+To run with current Nansen data, configure the server-side key and use live mode:
 
 ```text
-DATA_MODE=live DAILY_FIVE_DOWNLOAD=true npm run download:daily-five
+DATA_MODE=live npm run dev
 ```
 
-The collector writes `app/data/daily-five-provider-demo.json`. It is reused by later local runs. `NANSEN_CREDIT_BUDGET` limits normal provider calls and `DAILY_FIVE_DOWNLOAD_BUDGET` limits the one-time collection.
+The app writes `app/data/daily-five-provider-demo.json` for the current UTC day. `npm run download:daily-five` can be used from `app/` to refresh that day explicitly. There is no application default credit limit; set `NANSEN_CREDIT_BUDGET` only when an operator wants an explicit request guard.
 
 Never commit `.env`, API keys, cookies, database files, or other secrets.

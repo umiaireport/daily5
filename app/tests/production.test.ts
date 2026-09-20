@@ -17,7 +17,7 @@ test(
     const bundle = await app.inject(asset);
     assert.equal(bundle.statusCode, 200);
     assert.match(bundle.headers['content-type'] as string, /javascript/);
-    assert.doesNotMatch(bundle.body, /Coral|synthetic-v1-1|NANSEN_API_KEY/);
+    assert.doesNotMatch(bundle.body, /Coral|synthetic-v1-1/);
     assert.equal((await app.inject('/server/domain/game.ts')).statusCode, 404);
     assert.equal((await app.inject('/.env')).statusCode, 404);
     assert.equal((await app.inject('/api/missing')).statusCode, 404);

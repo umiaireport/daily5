@@ -23,7 +23,6 @@ import {
   createHistoricalDailyFiveCasePack,
   createRandomPracticeCasePack,
   createSyntheticDailyFiveCasePack,
-  readLatestDailyFiveSnapshot,
   readDailyFiveSnapshot,
   writeDailyFiveSnapshot,
 } from './domain/daily-five/index.js';
@@ -39,10 +38,14 @@ import { registerProgressionRoutes } from './routes/progression.js';
 import { dailySettlementSources, registerDailySettlementSources } from './db/daily.js';
 import { DailyGame, type DailyChallenge } from './domain/daily.js';
 import { Game, GameError } from './domain/game.js';
-import { collectLiveScenario } from './domain/live.js';
+import {
+  collectLiveScenario,
+  discoverLiveProviderAssets,
+  type LiveProviderAsset,
+} from './domain/live.js';
 import { createLiveHuntBoardFactory } from './domain/hunt/live-board.js';
 import { createNansenClient, type AttemptEvent } from './nansen/client.js';
-import { configuredNansenApiKey } from './nansen/config.js';
+import { configuredNansenApiKey, configuredNansenCreditBudget } from './nansen/config.js';
 import { providerStatus } from './nansen/status.js';
 import { COSTS, START_CASH } from './domain/scoring.js';
 import { SCENARIOS, type SyntheticScenario } from '../fixtures/synthetic/scenarios.js';
@@ -66,251 +69,30 @@ const PRACTICE_RULES: DailyFiveV2Rules = {
   cohort: 'daily-five-v2',
 } as const;
 
-const DAILY_FIVE_PROVIDER_ASSETS = [
-  {
-    symbol: 'WETH',
-    name: 'Wrapped Ether',
-    chain: 'ethereum',
-    address: '0xC02aaA39b223FE8D0A0e5C4F27eAD9083C756Cc2',
-  },
-  {
-    symbol: 'WBTC',
-    name: 'Wrapped Bitcoin',
-    chain: 'ethereum',
-    address: '0x2260FAC5E5542a773Aa44fBCfeDf7C193bc2C599',
-  },
-  {
-    symbol: 'PEPE',
-    name: 'Pepe',
-    chain: 'ethereum',
-    address: '0x6982508145454Ce325dDbE47a25d4ec3d2311933',
-  },
-  {
-    symbol: 'USDC',
-    name: 'USD Coin',
-    chain: 'ethereum',
-    address: '0xA0b86991c6218b36c1d19d4a2e9eb0ce3606eb48',
-  },
-  {
-    symbol: 'AAVE',
-    name: 'Aave',
-    chain: 'ethereum',
-    address: '0x7Fc66500c84A76Ad7e9c93437bFc5Ac33E2DDaE9',
-  },
-  {
-    symbol: 'UNI',
-    name: 'Uniswap',
-    chain: 'ethereum',
-    address: '0x1f9840a85d5aF5bf1D1762F925BDADdC4201F984',
-  },
-  {
-    symbol: 'LINK',
-    name: 'Chainlink',
-    chain: 'ethereum',
-    address: '0x514910771AF9Ca656af840dff83E8264EcF986CA',
-  },
-  {
-    symbol: 'MKR',
-    name: 'Maker',
-    chain: 'ethereum',
-    address: '0x9f8F72aA9304c8B593d555F12eF6589cC3A579A2',
-  },
-  {
-    symbol: 'LDO',
-    name: 'Lido DAO',
-    chain: 'ethereum',
-    address: '0x5A98FcBEA516Cf06857215779Fd812CA3beF1B32',
-  },
-  {
-    symbol: 'SHIB',
-    name: 'Shiba Inu',
-    chain: 'ethereum',
-    address: '0x95aD61b0a150d79219dCF64E1E6Cc01f0B64C4cE',
-  },
-  {
-    symbol: 'USDT',
-    name: 'Tether USD',
-    chain: 'ethereum',
-    address: '0xdAC17F958D2ee523a2206206994597C13D831ec7',
-  },
-  {
-    symbol: 'DAI',
-    name: 'Dai',
-    chain: 'ethereum',
-    address: '0x6B175474E89094C44Da98b954EedeAC495271d0F',
-  },
-  {
-    symbol: 'CRV',
-    name: 'Curve DAO',
-    chain: 'ethereum',
-    address: '0xD533a949740bb3306d119CC777fa900bA034cd52',
-  },
-  {
-    symbol: 'COMP',
-    name: 'Compound',
-    chain: 'ethereum',
-    address: '0xC00e94Cb662C3520282E6f5717214004A7f26888',
-  },
-  {
-    symbol: 'SNX',
-    name: 'Synthetix',
-    chain: 'ethereum',
-    address: '0xC011a72400E58ecD99Ee497CF89E3775d4bd732F',
-  },
-  {
-    symbol: 'LRC',
-    name: 'Loopring',
-    chain: 'ethereum',
-    address: '0xBBbbCA6A901c926F240b89EacB641d8Aec7AEafD',
-  },
-  {
-    symbol: 'SUSHI',
-    name: 'Sushi',
-    chain: 'ethereum',
-    address: '0x6B3595068778DD592e39A122f4f5a5cf09C90fE2',
-  },
-  {
-    symbol: 'BAT',
-    name: 'Basic Attention Token',
-    chain: 'ethereum',
-    address: '0x0D8775F648430679A709E98d2b0Cb6250d2887EF',
-  },
-  {
-    symbol: 'ENS',
-    name: 'Ethereum Name Service',
-    chain: 'ethereum',
-    address: '0xC18360217D8F7Ab5e7c516566761Ea12Ce7F9D72',
-  },
-  {
-    symbol: '1INCH',
-    name: '1inch',
-    chain: 'ethereum',
-    address: '0x111111111117dC0aa78b770fA6A738034120C302',
-  },
-  {
-    symbol: 'DYDX',
-    name: 'dYdX',
-    chain: 'ethereum',
-    address: '0x92D6C1e31e14520e676a687F0a93788B716BEff5',
-  },
-  {
-    symbol: 'GRT',
-    name: 'The Graph',
-    chain: 'ethereum',
-    address: '0xc944E90C64B2c07662A292be6244BDf05Cda44a7',
-  },
-  {
-    symbol: 'YFI',
-    name: 'yearn.finance',
-    chain: 'ethereum',
-    address: '0x0bc529c00C6401aEF6D220BE8C6Ea1667F6Ad93e',
-  },
-  {
-    symbol: 'RPL',
-    name: 'Rocket Pool',
-    chain: 'ethereum',
-    address: '0xD33526068D116cE69F19A9ee46F0bd304F21A51f',
-  },
-  {
-    symbol: 'APE',
-    name: 'ApeCoin',
-    chain: 'ethereum',
-    address: '0x4d224452801aced8B2F0aebe155379bb5D594381',
-  },
-  {
-    symbol: 'FXS',
-    name: 'Frax Share',
-    chain: 'ethereum',
-    address: '0x5E8422345238F34275888049021821E8E08CAa1f',
-  },
-  {
-    symbol: 'BAL',
-    name: 'Balancer',
-    chain: 'ethereum',
-    address: '0xba100000625a3754423978a60c9317c58a424e3D',
-  },
-  {
-    symbol: 'GNO',
-    name: 'Gnosis',
-    chain: 'ethereum',
-    address: '0x6810e776880c02933d47db1b9fc05908e5386b96',
-  },
-  {
-    symbol: 'QNT',
-    name: 'Quant',
-    chain: 'ethereum',
-    address: '0x4a220E6096B25EADb88358cb44068A3248254675',
-  },
-  {
-    symbol: 'ZRX',
-    name: '0x',
-    chain: 'ethereum',
-    address: '0xE41d2489571d322189246DaFA5ebDe1F4699F498',
-  },
-  {
-    symbol: 'KNC',
-    name: 'Kyber Network Crystal',
-    chain: 'ethereum',
-    address: '0xdefa4e8a7bcba345f687a2f1456f5edd9ce97202',
-  },
-  {
-    symbol: 'BNT',
-    name: 'Bancor',
-    chain: 'ethereum',
-    address: '0x1f573d6Fb3F13d689ff844B4cEce4E8cA4E45D4f',
-  },
-  {
-    symbol: 'AXS',
-    name: 'Axie Infinity',
-    chain: 'ethereum',
-    address: '0xbb0e17ef65f82ab018d8edd776e8dd940327b28b',
-  },
-  {
-    symbol: 'FET',
-    name: 'Artificial Superintelligence Alliance',
-    chain: 'ethereum',
-    address: '0xaea46A60368A7bD060eec7DF8CBa43b7EF41Ad85',
-  },
-  {
-    symbol: 'OCEAN',
-    name: 'Ocean Protocol',
-    chain: 'ethereum',
-    address: '0x967da4048cD07ab37855c090aAF366e4ce1b9F48',
-  },
-  {
-    symbol: 'TUSD',
-    name: 'TrueUSD',
-    chain: 'ethereum',
-    address: '0x0000000000085d4780B73119b644AE5ecd22b376',
-  },
-  {
-    symbol: 'FRAX',
-    name: 'Frax',
-    chain: 'ethereum',
-    address: '0x853d955aCEf822Db058eb8505911ED77F175b99e',
-  },
-  {
-    symbol: 'PAXG',
-    name: 'PAX Gold',
-    chain: 'ethereum',
-    address: '0x45804880De22913dAFE09f4980848ECE6EcbAf78',
-  },
-  {
-    symbol: 'LPT',
-    name: 'Livepeer',
-    chain: 'ethereum',
-    address: '0x58b6A8A3302369DAEc383334672404Ee733aB239',
-  },
-  {
-    symbol: 'SAND',
-    name: 'The Sandbox',
-    chain: 'ethereum',
-    address: '0x3845badade8e6dff049820680d1f14bd3903a5d0',
-  },
-] as const;
+function shuffleProviderAssets(
+  assets: readonly LiveProviderAsset[],
+  dayStart: number,
+): LiveProviderAsset[] {
+  const shuffled = [...assets];
+  let seed = (Math.floor(dayStart / DAY) ^ 0x9e3779b9) >>> 0;
+  const next = () => {
+    seed = (seed * 1_664_525 + 1_013_904_223) >>> 0;
+    return seed;
+  };
+  for (let index = shuffled.length - 1; index > 0; index -= 1) {
+    const swap = next() % (index + 1);
+    [shuffled[index], shuffled[swap]] = [shuffled[swap]!, shuffled[index]!];
+  }
+  return shuffled;
+}
 
-function dailyFiveProviderScenario(observedAt: string): SyntheticScenario {
+function dailyFiveProviderScenario(
+  observedAt: string,
+  providerAssets: readonly LiveProviderAsset[],
+  dayStart: number,
+): SyntheticScenario {
   const templates = SCENARIOS[0]!.assets;
+  const assets = shuffleProviderAssets(providerAssets, dayStart);
   return {
     id: `nansen-daily-five-${observedAt.slice(0, 10)}`,
     index: 1,
@@ -319,11 +101,11 @@ function dailyFiveProviderScenario(observedAt: string): SyntheticScenario {
     sourceUrl: 'https://nansen.ai',
     title: 'The daily signal',
     subtitle:
-      'Twenty-five real Ethereum assets in five fresh pools, with one whale signal hidden in each pool.',
+      'Twenty-five real provider assets in five fresh pools, with one whale signal hidden in each pool.',
     cutoff: observedAt,
-    assets: DAILY_FIVE_PROVIDER_ASSETS.map((asset, index) => ({
+    assets: assets.map((asset, index) => ({
       ...templates[index % templates.length]!,
-      id: `nansen-${asset.symbol.toLowerCase()}`,
+      id: `nansen-${asset.chain.toLowerCase()}-${asset.address.toLowerCase()}`,
       alias: `${asset.symbol} signal`,
       name: asset.name,
       symbol: asset.symbol,
@@ -359,41 +141,44 @@ export async function buildApp(options: AppOptions = {}) {
     Number.isInteger(configuredHistoryLagDays) && configuredHistoryLagDays >= 0
       ? configuredHistoryLagDays
       : 2;
-  const historicalAnchorDayStart = currentDayStart - historyLagDays * DAY;
   const currentDayId = `${dailyFiveDayIdPrefix ?? 'daily-v2-wallet-'}${new Date(currentDayStart).toISOString().slice(0, 10)}`;
   const dailyFiveSnapshotPath =
     process.env.DAILY_FIVE_PROVIDER_SNAPSHOT ?? './data/daily-five-provider-demo.json';
-  const downloadDailyFive = process.env.DAILY_FIVE_DOWNLOAD === 'true';
   const savedHistoricalDailyPack =
-    requestedMode === 'live'
-      ? (readDailyFiveSnapshot(dailyFiveSnapshotPath, currentDayId, DAILY_FIVE_PROVIDER_ASSETS) ??
-        readLatestDailyFiveSnapshot(dailyFiveSnapshotPath, DAILY_FIVE_PROVIDER_ASSETS))
-      : null;
+    requestedMode === 'live' ? readDailyFiveSnapshot(dailyFiveSnapshotPath, currentDayId) : null;
   const apiKey = configuredNansenApiKey();
-  const attemptLog: AttemptEvent[] = [];
-  const nansen =
-    requestedMode === 'live' && downloadDailyFive && !savedHistoricalDailyPack && apiKey?.trim()
-      ? createNansenClient({
-          enabled: true,
-          apiKey,
-          creditBudget: Number(process.env.NANSEN_CREDIT_BUDGET ?? 10),
-          verifiedCreditHeader: 'x-nansen-credits-cost',
-          onAttempt: (event) => {
-            if (attemptLog.length >= 100) attemptLog.shift();
-            attemptLog.push(event);
-          },
-        })
+  const localSavedProviderPack =
+    requestedMode === 'live' && !production && !apiKey
+      ? readDailyFiveSnapshot(dailyFiveSnapshotPath, undefined)
       : null;
-  let liveAvailable = false;
+  const creditBudget = configuredNansenCreditBudget();
+  const attemptLog: AttemptEvent[] = [];
+  const createProviderClient = () => {
+    if (!apiKey) return null;
+    return createNansenClient({
+      enabled: true,
+      apiKey,
+      ...(creditBudget === undefined ? {} : { creditBudget }),
+      verifiedCreditHeader: 'x-nansen-credits-cost',
+      onAttempt: (event) => {
+        if (attemptLog.length >= 100) attemptLog.shift();
+        attemptLog.push(event);
+      },
+    });
+  };
+  let nansen =
+    requestedMode === 'live' && !savedHistoricalDailyPack ? createProviderClient() : null;
+  let liveAvailable =
+    requestedMode === 'live' && Boolean(savedHistoricalDailyPack ?? localSavedProviderPack);
   let liveReason =
     requestedMode === 'live'
       ? savedHistoricalDailyPack
-        ? 'Saved Nansen Daily Five data is loaded locally; no provider request is needed.'
-        : downloadDailyFive
-          ? apiKey?.trim()
-            ? 'Live collection is unavailable right now; Daily Five will remain unavailable until provider data is collected.'
-            : 'The one-time Daily Five download needs NANSEN_API (or a configured legacy NANSEN_API2/NANSEN_API_KEY alias) in the local environment.'
-          : 'No saved provider-backed Daily Five snapshot exists. Run npm run download:daily-five once; normal app startup will not spend provider credits.'
+        ? 'Today’s Nansen Daily Five data is loaded from the local same-day snapshot.'
+        : localSavedProviderPack
+          ? 'A saved Nansen provider pack is loaded for local development; add NANSEN_API for the current UTC board.'
+          : apiKey
+            ? 'Collecting today’s Nansen Daily Five data.'
+            : 'Live Daily Five needs NANSEN_API in the server environment.'
       : providerStatus().reason;
   const providerFailureReason = () => {
     const error = attemptLog.at(-1)?.error;
@@ -406,21 +191,37 @@ export async function buildApp(options: AppOptions = {}) {
   let scenarios: SyntheticScenario[] = SCENARIOS;
   let liveScenario: SyntheticScenario | null = null;
   const liveHuntEnabled = process.env.NANSEN_LIVE_HUNT === 'true';
-  const providerDailyScenario = dailyFiveProviderScenario(new Date().toISOString());
-  let historicalDailyPack = savedHistoricalDailyPack;
+  let historicalDailyPack = savedHistoricalDailyPack ?? localSavedProviderPack;
   let historicalFailure: string | null = null;
+
+  async function collectHistoricalPack(dayStart: number) {
+    const client =
+      dayStart === currentDayStart ? (nansen ?? createProviderClient()) : createProviderClient();
+    if (!client) throw new Error('NANSEN_API is not configured.');
+    nansen = client;
+    const providerAssets = await discoverLiveProviderAssets(client);
+    const providerScenario = dailyFiveProviderScenario(
+      new Date().toISOString(),
+      providerAssets,
+      dayStart,
+    );
+    const dailyId = `${dailyFiveDayIdPrefix!}${new Date(dayStart).toISOString().slice(0, 10)}`;
+    const pack = await createHistoricalDailyFiveCasePack(
+      dailyId,
+      dayStart - historyLagDays * DAY,
+      DAILY_FIVE_V2_RULES,
+      providerScenario,
+      client,
+    );
+    writeDailyFiveSnapshot(dailyFiveSnapshotPath, pack);
+    return pack;
+  }
+
   if (nansen) {
     try {
-      historicalDailyPack = await createHistoricalDailyFiveCasePack(
-        currentDayId,
-        historicalAnchorDayStart,
-        DAILY_FIVE_V2_RULES,
-        providerDailyScenario,
-        nansen,
-      );
-      writeDailyFiveSnapshot(dailyFiveSnapshotPath, historicalDailyPack);
-      liveReason =
-        'Nansen data is ready and saved locally. Daily Five will not request it again on restart.';
+      historicalDailyPack = await collectHistoricalPack(currentDayStart);
+      liveAvailable = true;
+      liveReason = 'Today’s Nansen data is ready and saved locally for consistent same-day play.';
     } catch (error) {
       historicalFailure =
         error instanceof Error ? error.message : 'unknown historical collection error';
@@ -429,20 +230,17 @@ export async function buildApp(options: AppOptions = {}) {
           ? providerFailureReason()
           : `Nansen historical coverage is incomplete (${historicalFailure}). No synthetic data is published as Daily Five.`;
     }
-    if (liveHuntEnabled) {
-      try {
-        const live = await collectLiveScenario(nansen);
-        scenarios = [live];
-        liveScenario = live;
-        liveAvailable = true;
-        liveReason =
-          'Live Nansen data is ready. This one-round replay uses current 24h discovery metrics.';
-      } catch {
-        if (!historicalDailyPack) liveReason = providerFailureReason();
-      }
+  }
+  if (requestedMode === 'live' && liveHuntEnabled && apiKey) {
+    try {
+      const live = await collectLiveScenario(nansen ?? createProviderClient()!);
+      scenarios = [live];
+      liveScenario = live;
+    } catch {
+      if (!historicalDailyPack) liveReason = providerFailureReason();
     }
   }
-  const practicePool =
+  let practicePool =
     historicalDailyPack ??
     createSyntheticDailyFiveCasePack(
       `practice-pool-${new Date(currentDayStart).toISOString().slice(0, 10)}`,
@@ -581,71 +379,108 @@ export async function buildApp(options: AppOptions = {}) {
     game.session(id);
     return id;
   }
-  const dailyFive = new DailyFiveEngine(db, {
-    rules: DAILY_FIVE_V2_RULES,
-    displayNameForPlayer: (playerId) =>
-      userById(db, playerId)?.displayName ?? `player-${playerId.slice(0, 6)}`,
-    ...(requestedMode === 'live'
+  const providerIdentityForKey = (key: string) => {
+    const normalized = key.toLowerCase();
+    const candidate = historicalDailyPack?.privateRounds
+      .flatMap((round) => round.candidates)
+      .find((item) => item.realAssetKey?.toLowerCase() === normalized);
+    return candidate?.realAssetName || candidate?.realAssetSymbol
       ? {
-          privateAssetIdentityForKey: (key: string) => {
-            const [chain, address] = key.split(':');
-            const asset = DAILY_FIVE_PROVIDER_ASSETS.find(
-              (candidate) =>
-                candidate.chain.toLowerCase() === chain?.toLowerCase() &&
-                candidate.address.toLowerCase() === address?.toLowerCase(),
-            );
-            return asset ? { name: asset.name, symbol: asset.symbol } : undefined;
-          },
+          name: candidate.realAssetName ?? 'Provider asset',
+          symbol: candidate.realAssetSymbol ?? 'ASSET',
         }
-      : {}),
-    ...(requestedMode === 'live'
-      ? {
-          dayIdPrefix: dailyFiveDayIdPrefix,
-          requiredCohort: DAILY_FIVE_PROVIDER_COHORT,
-          publishedDailyId: historicalDailyPack?.publicChallenge.dailyId,
-        }
-      : {}),
-    ...(historicalDailyPack
-      ? {
-          casePackFor: (dailyId: string, dayStart: number) =>
-            historicalDailyPack!.publicChallenge.dailyId === dailyId
-              ? historicalDailyPack!
-              : (() => {
-                  throw new Error(
-                    'The provider-backed Daily Five pack is published for today only.',
-                  );
-                })(),
-        }
-      : requestedMode === 'live'
+      : undefined;
+  };
+
+  const createDailyFiveEngine = () =>
+    new DailyFiveEngine(db, {
+      rules: DAILY_FIVE_V2_RULES,
+      displayNameForPlayer: (playerId) =>
+        userById(db, playerId)?.displayName ?? `player-${playerId.slice(0, 6)}`,
+      ...(requestedMode === 'live'
         ? {
-            casePackFor: () => {
-              throw new DailyFiveError(
-                'UNAVAILABLE',
-                `Daily Five provider data is unavailable. ${liveReason}`,
-              );
-            },
+            privateAssetIdentityForKey: providerIdentityForKey,
+            dayIdPrefix: dailyFiveDayIdPrefix,
+            requiredCohort: DAILY_FIVE_PROVIDER_COHORT,
+            publishedDailyId: historicalDailyPack?.publicChallenge.dailyId,
           }
         : {}),
-  });
-  const practice = new DailyFiveEngine(db, {
-    rules: PRACTICE_RULES,
-    displayNameForPlayer: (playerId) =>
-      userById(db, playerId)?.displayName ?? `player-${playerId.slice(0, 6)}`,
-    casePackFor: (dailyId: string, dayStart: number) =>
-      createRandomPracticeCasePack(dailyId, dayStart, PRACTICE_RULES, practicePool),
-    ...(requestedMode === 'live'
-      ? {
-          privateAssetIdentityForKey: (key: string) => {
-            const [chain, address] = key.split(':');
-            const asset = DAILY_FIVE_PROVIDER_ASSETS.find(
-              (candidate) =>
-                candidate.chain.toLowerCase() === chain?.toLowerCase() &&
-                candidate.address.toLowerCase() === address?.toLowerCase(),
-            );
-            return asset ? { name: asset.name, symbol: asset.symbol } : undefined;
-          },
+      ...(historicalDailyPack
+        ? {
+            casePackFor: (dailyId: string) =>
+              historicalDailyPack!.publicChallenge.dailyId === dailyId
+                ? historicalDailyPack!
+                : (() => {
+                    throw new Error(
+                      'The provider-backed Daily Five pack is published for today only.',
+                    );
+                  })(),
+          }
+        : requestedMode === 'live'
+          ? {
+              casePackFor: () => {
+                throw new DailyFiveError(
+                  'UNAVAILABLE',
+                  `Daily Five provider data is unavailable. ${liveReason}`,
+                );
+              },
+            }
+          : {}),
+    });
+
+  const createPracticeEngine = () =>
+    new DailyFiveEngine(db, {
+      rules: PRACTICE_RULES,
+      displayNameForPlayer: (playerId) =>
+        userById(db, playerId)?.displayName ?? `player-${playerId.slice(0, 6)}`,
+      casePackFor: (dailyId: string, dayStart: number) =>
+        createRandomPracticeCasePack(dailyId, dayStart, PRACTICE_RULES, practicePool),
+      ...(requestedMode === 'live' ? { privateAssetIdentityForKey: providerIdentityForKey } : {}),
+    });
+
+  let dailyFive = createDailyFiveEngine();
+  let practice = createPracticeEngine();
+  let refreshInFlight: Promise<void> | null = null;
+  const ensureCurrentLivePack = async (): Promise<void> => {
+    if (requestedMode !== 'live') return;
+    if (localSavedProviderPack && !apiKey) return;
+    const now = new Date();
+    const dayStart = Date.UTC(now.getUTCFullYear(), now.getUTCMonth(), now.getUTCDate());
+    const dailyId = `${dailyFiveDayIdPrefix!}${new Date(dayStart).toISOString().slice(0, 10)}`;
+    if (historicalDailyPack?.publicChallenge.dailyId === dailyId) return;
+    if (!apiKey) {
+      liveAvailable = false;
+      liveReason = 'Live Daily Five needs NANSEN_API in the server environment.';
+      return;
+    }
+    if (!refreshInFlight) {
+      refreshInFlight = (async () => {
+        try {
+          historicalDailyPack = await collectHistoricalPack(dayStart);
+          practicePool = historicalDailyPack;
+          dailyFive = createDailyFiveEngine();
+          practice = createPracticeEngine();
+          liveAvailable = true;
+          liveReason =
+            'Today’s Nansen data is ready and saved locally for consistent same-day play.';
+        } catch (error) {
+          historicalFailure =
+            error instanceof Error ? error.message : 'unknown historical collection error';
+          liveAvailable = false;
+          liveReason =
+            attemptLog.at(-1)?.error === 'credits'
+              ? providerFailureReason()
+              : `Nansen historical coverage is incomplete (${historicalFailure}).`;
+        } finally {
+          refreshInFlight = null;
         }
-      : {}),
+      })();
+    }
+    await refreshInFlight;
+  };
+  app.addHook('preHandler', async (request) => {
+    if (request.url.startsWith('/api/daily-five') || request.url.startsWith('/api/practice'))
+      await ensureCurrentLivePack();
   });
   const hunt = new HuntService(db);
   const huntV2 = new HuntV2Service(db, {
@@ -662,7 +497,7 @@ export async function buildApp(options: AppOptions = {}) {
     return payload;
   });
   await registerDailyFiveRoutes(app, {
-    engine: dailyFive,
+    getEngine: () => dailyFive,
     cookieName: AUTH_COOKIE,
     playerId: dailyFivePlayer,
   });
@@ -672,7 +507,7 @@ export async function buildApp(options: AppOptions = {}) {
     return dailyFive.allTimeLeaderboard(100);
   });
   await registerDailyFiveRoutes(app, {
-    engine: practice,
+    getEngine: () => practice,
     routePrefix: '/api/practice',
     getToday: () => practice.practice(),
     defaultMode: 'practice',

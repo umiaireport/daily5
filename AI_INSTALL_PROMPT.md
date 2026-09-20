@@ -16,7 +16,7 @@ Requirements:
 
 Safety:
 - Never print or commit passwords, API keys, cookies, DATABASE_URL values, or .env contents.
-- Keep DATA_MODE=synthetic unless the user authorizes live Nansen collection and confirms available credits.
+- Keep DATA_MODE=synthetic unless the user asks to use live Nansen data.
 - Never place NANSEN_API in frontend code or a VITE_ variable.
 - Do not run the live collector without explicit user authorization.
 - Report only commands and checks that actually ran.
@@ -25,12 +25,12 @@ Steps:
 1. cd app
 2. Confirm Node is in the required 24.x range.
 3. If .env does not exist, copy .env.example to .env. Preserve existing local values.
-4. Keep the default synthetic mode for the initial setup.
+4. Keep the default synthetic mode for the initial setup unless live mode was requested.
 5. Run npm ci.
 6. Run npm run quality:check and report its result.
 7. Start npm run dev, check http://127.0.0.1:8411/healthz, and open http://127.0.0.1:8311 in a browser.
 8. Verify the demo login, Practice flow, Daily Five flow, clue unlocking, allocation, reveal, account history, and leaderboard screens.
-9. If live data was explicitly authorized, configure NANSEN_API only in app/.env, set DATA_MODE=live, and run the collector only after confirming credits. Verify that the saved provider pack is reused on restart.
+9. If live data was explicitly requested, configure NANSEN_API only in app/.env, set DATA_MODE=live, and verify that the current-day provider pack loads or is collected. If NANSEN_CREDIT_BUDGET is set, treat it as an operator-defined guard; do not add a default limit.
 
 Final report:
 - Node and npm versions.

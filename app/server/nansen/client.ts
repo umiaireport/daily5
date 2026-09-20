@@ -62,7 +62,8 @@ export interface AttemptEvent {
 export interface ClientOptions {
   enabled?: boolean;
   apiKey?: string;
-  creditBudget: number;
+  /** Optional operator-defined request guard. Unset means no application guard. */
+  creditBudget?: number;
   fetch?: typeof globalThis.fetch;
   sleep?: (ms: number) => Promise<void>;
   now?: () => number;
@@ -102,8 +103,8 @@ export function retryDelay(
 /** Isolated, disabled-by-default transport. It is never connected to synthetic player requests. */
 export function createNansenClient(options: ClientOptions) {
   if (
-    !Number.isFinite(options.creditBudget) ||
-    options.creditBudget < 0 ||
+    (options.creditBudget !== undefined &&
+      (!Number.isFinite(options.creditBudget) || options.creditBudget < 0)) ||
     (options.timeoutMs !== undefined &&
       (!Number.isFinite(options.timeoutMs) || options.timeoutMs <= 0))
   ) {
@@ -181,7 +182,10 @@ export function createNansenClient(options: ClientOptions) {
       const controller = new AbortController();
       try {
         // Reserve synchronously before fetch, so overlapping calls cannot both spend the same credits.
-        if (usage.accountedCredits + endpoint.credits > options.creditBudget)
+        if (
+          options.creditBudget !== undefined &&
+          usage.accountedCredits + endpoint.credits > options.creditBudget
+        )
           throw new ProviderError('budget');
         usage.accountedCredits += endpoint.credits;
         usage.attempts++;

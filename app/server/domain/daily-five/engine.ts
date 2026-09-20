@@ -109,7 +109,7 @@ export interface DailyFiveEngineOptions {
   readonly dayIdPrefix?: string;
   /** Live mode must never reopen a previously published synthetic cohort. */
   readonly requiredCohort?: string;
-  /** Reuse a saved provider publication when its historical day is older than the server clock. */
+  /** Pin the engine to the provider publication selected by the app for this run. */
   readonly publishedDailyId?: string;
   readonly displayNameForPlayer?: (playerId: string) => string | undefined;
 }

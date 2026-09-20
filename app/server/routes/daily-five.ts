@@ -9,7 +9,8 @@ import type {
 import { DailyFiveEngine, DailyFiveError } from '../domain/daily-five/index.js';
 
 export interface DailyFiveRouteOptions {
-  readonly engine: DailyFiveEngine;
+  readonly engine?: DailyFiveEngine;
+  readonly getEngine?: () => DailyFiveEngine;
   readonly playerId?: (request: FastifyRequest) => string | undefined;
   readonly cookieName?: string;
   readonly routePrefix?: string;
@@ -99,6 +100,12 @@ function identity(request: FastifyRequest, options: DailyFiveRouteOptions): stri
   return playerId;
 }
 
+function engine(options: DailyFiveRouteOptions): DailyFiveEngine {
+  const value = options.getEngine?.() ?? options.engine;
+  if (!value) throw new Error('Daily Five route engine is not configured.');
+  return value;
+}
+
 async function safely<T>(reply: FastifyReply, action: () => T | Promise<T>): Promise<T | void> {
   try {
     return await action();
@@ -115,7 +122,7 @@ export async function registerDailyFiveRoutes(
   const prefix = options.routePrefix ?? '/api/daily-five';
   const leaderboardEnabled = options.leaderboardEnabled ?? true;
   app.get(`${prefix}/today`, async (_request, reply) =>
-    safely(reply, () => options.getToday?.() ?? options.engine.today()),
+    safely(reply, () => options.getToday?.() ?? engine(options).today()),
   );
   app.post(`${prefix}/:id/attempts`, async (request, reply) =>
     safely(reply, () => {
@@ -125,34 +132,34 @@ export async function registerDailyFiveRoutes(
         ...parsed,
         ...(options.defaultMode ? { mode: options.defaultMode } : {}),
       } as StartDailyFiveCommand;
-      return options.engine.start(id, identity(request, options), command);
+      return engine(options).start(id, identity(request, options), command);
     }),
   );
   app.get(`${prefix}/attempts/:id`, async (request, reply) =>
-    safely(reply, () => options.engine.resume(identity(request, options), params(request).id)),
+    safely(reply, () => engine(options).resume(identity(request, options), params(request).id)),
   );
   app.post(`${prefix}/attempts/:id/clues`, async (request, reply) =>
     safely(reply, () => {
       const command = clueSchema.parse(request.body) as UnlockDailyClueCommand;
-      return options.engine.unlock(identity(request, options), params(request).id, command);
+      return engine(options).unlock(identity(request, options), params(request).id, command);
     }),
   );
   app.post(`${prefix}/attempts/:id/tickets`, async (request, reply) =>
     safely(reply, () => {
       const command = ticketSchema.parse(request.body) as SubmitDailyDecisionCommand;
-      return options.engine.submit(identity(request, options), params(request).id, command);
+      return engine(options).submit(identity(request, options), params(request).id, command);
     }),
   );
   app.post(`${prefix}/attempts/:id/continue`, async (request, reply) =>
     safely(reply, () => {
       const command = continueSchema.parse(request.body) as ContinueDailyCommand;
-      return options.engine.continue(identity(request, options), params(request).id, command);
+      return engine(options).continue(identity(request, options), params(request).id, command);
     }),
   );
   if (leaderboardEnabled)
     app.get(`${prefix}/:id/leaderboard`, async (request, reply) =>
       safely(reply, () =>
-        options.engine.leaderboard(
+        engine(options).leaderboard(
           params(request).id,
           options.playerId?.(request) ?? request.cookies?.[options.cookieName ?? 'whale_session'],
         ),

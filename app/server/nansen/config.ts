@@ -1,12 +1,13 @@
-/**
- * Return the first configured Nansen key using the primary key name first.
- *
- * `NANSEN_API2` and `NANSEN_API_KEY` remain supported for older workspace
- * setups, but a non-empty `NANSEN_API` always wins when more than one alias is
- * present. The key value is never logged or sent to the browser.
- */
+/** Return the server-side Nansen key without exposing it to the browser. */
 export function configuredNansenApiKey(env: NodeJS.ProcessEnv = process.env): string | undefined {
-  return [env.NANSEN_API, env.NANSEN_API2, env.NANSEN_API_KEY]
-    .map((value) => value?.trim())
-    .find((value): value is string => Boolean(value));
+  const value = env.NANSEN_API?.trim();
+  return value || undefined;
+}
+
+/** An optional local request guard; live operation has no application default. */
+export function configuredNansenCreditBudget(
+  env: NodeJS.ProcessEnv = process.env,
+): number | undefined {
+  const raw = env.NANSEN_CREDIT_BUDGET?.trim();
+  return raw ? Number(raw) : undefined;
 }

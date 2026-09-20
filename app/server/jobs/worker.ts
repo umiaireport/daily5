@@ -12,7 +12,7 @@ import {
 } from '../db/daily.js';
 import { DailyGame, type DailyChallenge } from '../domain/daily.js';
 import { createNansenClient, type Schema } from '../nansen/client.js';
-import { configuredNansenApiKey } from '../nansen/config.js';
+import { configuredNansenApiKey, configuredNansenCreditBudget } from '../nansen/config.js';
 import { providerStatus } from '../nansen/status.js';
 
 if (existsSync('.env')) loadEnvFile('.env');
@@ -87,11 +87,12 @@ async function settleDueChallenges(): Promise<{
     return { settled, voided, pending };
   }
   const apiKey = configuredNansenApiKey();
+  const creditBudget = configuredNansenCreditBudget();
   const client = apiKey
     ? createNansenClient({
         enabled: true,
         apiKey,
-        creditBudget: Number(process.env.NANSEN_CREDIT_BUDGET ?? 10),
+        ...(creditBudget === undefined ? {} : { creditBudget }),
         verifiedCreditHeader: 'x-nansen-credits-cost',
       })
     : null;

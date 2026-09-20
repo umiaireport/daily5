@@ -200,6 +200,14 @@ test('budget stops retry dispatch and accounts unknown failure charges conservat
   assert.equal(f.client.usage().attempts, 1);
 });
 
+test('an unset application budget does not stop normal provider requests', async () => {
+  const f = fixture([Response.json(valid), Response.json(valid)], { creditBudget: undefined });
+  await f.request({ page: 1 });
+  await f.request({ page: 2 });
+  assert.equal(f.calls.length, 2);
+  assert.equal(f.client.usage().accountedCredits, 2);
+});
+
 test('concurrent requests reserve budget before dispatch', async () => {
   const f = fixture([Response.json(valid)], { creditBudget: 1 });
   const outcomes = await Promise.allSettled([f.request({ page: 1 }), f.request({ page: 2 })]);

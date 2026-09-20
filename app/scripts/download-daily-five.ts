@@ -3,12 +3,9 @@ import { loadEnvFile } from 'node:process';
 
 for (const file of ['.env', '../.env', '../../.env']) if (existsSync(file)) loadEnvFile(file);
 process.env.DATA_MODE = 'live';
-process.env.DAILY_FIVE_DOWNLOAD = 'true';
 process.env.NANSEN_LIVE_HUNT = 'false';
-// Up to 40 Whale probes, 40 general DEX-trade requests, and 40 OHLCV coverage
-// probes are needed to select five fresh pools. The client enforces this
-// ceiling; normal app startup never collects.
-process.env.NANSEN_CREDIT_BUDGET = process.env.DAILY_FIVE_DOWNLOAD_BUDGET ?? '160';
+// buildApp refreshes the current provider-backed pack when the same-day snapshot
+// is missing. This command makes that refresh explicit for operators who want it.
 
 const { buildApp } = await import('../server/app.js');
 const app = await buildApp({ dataMode: 'live', logger: false });
