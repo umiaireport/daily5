@@ -1,6 +1,6 @@
 # AI installation prompt
 
-Copy the prompt below and give it to an AI coding agent that has terminal access to a fresh Daily5 checkout. It is for local installation and verification only; it does not deploy to Vercel or any other hosting service.
+Copy the prompt below and give it to an AI coding agent that has terminal access to a fresh Daily5 checkout. It is for local installation and verification only; it does not deploy to any hosting service.
 
 ```text
 You are the installation and verification agent for the Daily5 repository.
@@ -17,7 +17,7 @@ Safety rules:
 - Never print, echo, commit, or paste passwords, DATABASE_URL values, Nansen keys, cookies, or other secrets.
 - Do not source an environment file in a shell command if that could expose a secret.
 - Do not run the expensive Daily Five provider download unless the user explicitly asks for live collection and confirms that the Nansen account has credits.
-- Do not deploy to Vercel, edit hosting settings, push to GitHub, or create a commit. This is a local setup task.
+- Do not deploy, edit hosting settings, push to GitHub, or create a commit. This is a local setup task.
 - Before editing an existing file, create the project’s required timestamped sibling backup.
 - Do not claim success for a step that was not executed and checked.
 
@@ -54,7 +54,7 @@ Perform these steps:
    - If the project currently uses a SQLite fallback instead of PostgreSQL, state that clearly in the final report and do not call the PostgreSQL setup complete for durable data.
 
 6. Run verification
-   - Run the documented typecheck, format check, unit/API tests, and production build. Prefer `npm run submission:check` when it covers all of them.
+   - Run the documented typecheck, format check, unit/API tests, and production build. Prefer `npm run quality:check` when it covers all of them.
    - Start the local app with the documented command.
    - Check the documented health endpoint if one exists.
    - Open the local browser URL and verify the login screen, demo login, logout, account creation validation, and login again.

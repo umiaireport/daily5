@@ -1,8 +1,8 @@
-# Whale Arena Demo Storyboard
+# Daily5 Demo Storyboard
 
 ## 1. Local setup
 
-From `whale-arena/`, run `./dev.sh` (it prefers `.runtime/node-v24.21.0-linux-x64/bin`) or verify installed Node 24 before `npm ci`, then open `http://127.0.0.1:8311`. No key, account, or environment variable is required. For browser tests, Playwright uses `/usr/bin/chromium` by default; set `CHROMIUM_PATH` or run `npx playwright install chromium` if Chromium is unavailable. This storyboard describes a local synthetic tutorial and does not imply a public deployment, recording, GIF, or video.
+From the repository root, run `./dev.sh` (it prefers `.runtime/node-v24.21.0-linux-x64/bin`) or verify installed Node 24 before `npm ci`, then open `http://127.0.0.1:8311`. No key, account, or environment variable is required for the synthetic tutorial. For browser tests, Playwright uses `/usr/bin/chromium` by default; set `CHROMIUM_PATH` or run `npx playwright install chromium` if Chromium is unavailable. This storyboard describes the local app flow and its Nansen-backed data states.
 
 ## 2. 45–60 second flow
 
@@ -15,7 +15,7 @@ From `whale-arena/`, run `./dev.sh` (it prefers `.runtime/node-v24.21.0-linux-x6
 
 ## 3. Evidence checklist
 
-Use the Playwright output under `docs/screenshots/` when available. Review desktop `1440x900` and mobile `390x844`, keyboard dialog escape, no horizontal overflow, no console/network errors, clue-budget enforcement, immutable choices, and scorecard filename. Keep evidence local; do not invent external URLs or recordings.
+Use the Playwright output under `docs/screenshots/` when available. Review desktop `1440x900` and mobile `390x844`, keyboard dialog escape, no horizontal overflow, no console/network errors, clue-budget enforcement, immutable choices, and scorecard filename. Keep evidence tied to observable app behavior.
 
 ## 4. Captured evidence
 

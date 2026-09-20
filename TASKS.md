@@ -16,7 +16,7 @@ Deliver a polished, modular, complete five-round game. Daily Five is provider-ba
 
 ## 3. Deferred external release gates
 
-An API credential, verified provider responses and coverage, authorized credit budget, real daily challenge and settlement, display permissions, public deployment, recording, and competition submission remain separate release gates from this no-key implementation.
+An API credential, verified provider responses and coverage, authorized credit budget, and real daily challenge settlement remain separate release gates from this no-key implementation.
 
 ## 4. Daily Five repair and product pass
 

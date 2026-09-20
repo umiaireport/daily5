@@ -14,7 +14,7 @@ The server owns the scenario sequence, clue budget, allocation validation, lock 
 
 ## 4. Live-data mode boundaries
 
-The live collector verifies endpoint response shapes, positive prices/liquidity, stablecoin exclusion, observed cutoff, actual credit headers, request budget, and visible Nansen attribution. It uses composite discovery metrics rather than restricted raw Smart Money netflow endpoints. The process-local cache and redacted usage counters are not a durable provider ledger; production hosting still needs an explicit operational budget and release review. A provider API key alone is insufficient for a public submission.
+The live collector verifies endpoint response shapes, positive prices/liquidity, stablecoin exclusion, observed cutoff, actual credit headers, request budget, and visible Nansen attribution. It uses composite discovery metrics rather than restricted raw Smart Money netflow endpoints. The process-local cache and redacted usage counters are not a durable provider ledger; production hosting still needs an explicit operational budget and release review. A provider API key alone does not replace a reviewed, bounded data-collection policy.
 
 ## 5. Daily challenge lifecycle
 

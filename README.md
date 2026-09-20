@@ -2,9 +2,9 @@
 
 Daily5 is the standalone daily challenge extracted from Whale Arena. It keeps the Daily Five research surface—five mystery asset cards, charts, clues, allocation controls, immediate reveal, and scorecard—without exposing Whale Hunt.
 
-## Meridian Buildathon submission
+## About Daily5
 
-Daily5 is a five-round market-reading game: Nansen-backed evidence becomes the clues, the player allocates a virtual wallet, and the board reveals the result after the round closes. It never places real trades. The full ordered submission workflow, live-data safety notes, GitHub checklist, form fields, and recording plan are in [`docs/submission/README.md`](docs/submission/README.md). The 30–60 second silent demo shot list is in [`docs/submission/demo-script.md`](docs/submission/demo-script.md).
+Daily5 is a five-round market-reading game built for the Nansen Meridian Buildathon. Nansen-backed market evidence becomes research clues, the player allocates a virtual wallet, and the board reveals the historical result after the round closes. It never places real trades.
 
 ## Product behavior
 
@@ -48,9 +48,7 @@ The app is safe to run without a provider key: local synthetic mode is explicit 
 DATA_MODE=live DAILY_FIVE_DOWNLOAD=true npm run download:daily-five
 ```
 
-The saved provider pack is reused on restart, so normal local app startup does not spend provider credits. Practice draws a fresh five-asset board from that immutable provider pool for each new practice attempt. Provider calls are bounded by `NANSEN_CREDIT_BUDGET`; never enable live mode without a funded, permitted key. Run `npm run submission:check` before publishing.
-
-For a new deployment, use the Vercel Project Environment Variables described in [`docs/submission/vercel.md`](docs/submission/vercel.md). Do not create a tracked `.env` containing `NANSEN_API`; Vercel stores that key as a write-only secret.
+The saved provider pack is reused on restart, so normal local app startup does not spend provider credits. Practice draws a fresh five-asset board from that immutable provider pool for each new practice attempt. Provider calls are bounded by `NANSEN_CREDIT_BUDGET`; never enable live mode without a funded, permitted key. Run `npm run quality:check` to verify the local app.
 
 ## Main routes
 

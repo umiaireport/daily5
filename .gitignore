@@ -14,4 +14,3 @@ data/
 test-results/
 playwright-report/
 coverage/
-.vercel

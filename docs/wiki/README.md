@@ -1,13 +1,10 @@
-# Whale Arena Wiki Index
+# Daily5 Wiki Index
 
 Each page documents one source or script module. Paths and function line numbers refer to the current checkout and must be refreshed after code moves.
 
 ## Application
 
 - [`../api-map.md`](../api-map.md) — route map and transport boundary.
-- [`../buildathon-rules.md`](../buildathon-rules.md) — cached Meridian rules and competitive notes.
-- [`../submission/README.md`](../submission/README.md) — ordered Meridian submission workflow and handoff checklist.
-- [`../submission/demo-script.md`](../submission/demo-script.md) — 30–60 second live-data recording plan and Debian capture commands.
 - [`app.md`](app.md) — Fastify application and routes.
 - [`server-index.md`](server-index.md) — API process entrypoint.
 - [`vite-config.md`](vite-config.md) — browser development/build configuration.
